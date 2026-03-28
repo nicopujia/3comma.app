@@ -241,43 +241,59 @@ const ACCOUNT_TX_TEMPLATES: Record<string, AccountTxTemplate[]> = {
   ],
 }
 
+/** Seed-based PRNG so synthetic data is stable across renders */
+function seededRandom(seed: number) {
+  let s = seed
+  return () => {
+    s = (s * 16807 + 0) % 2147483647
+    return (s - 1) / 2147483646
+  }
+}
+
 export function generateTransactions(accounts: Account[]): Transaction[] {
   const txs: Transaction[] = []
+  const rand = seededRandom(42)
 
   accounts.forEach((account) => {
     const templates = ACCOUNT_TX_TEMPLATES[account.id] ?? [
       { description: 'Transaction', type: 'inflow' as const, sign: 1 as const },
     ]
-    const count = account.type === 'crypto' ? 10 : account.type === 'investment' ? 5 : 7
 
-    for (let i = 0; i < count; i++) {
-      const daysAgo = Math.floor(Math.random() * 90)
-      const date = new Date()
-      date.setDate(date.getDate() - daysAgo)
-      date.setHours(
-        Math.floor(Math.random() * 14) + 8,
-        Math.floor(Math.random() * 60),
-        0,
-        0
-      )
+    // ~3-5 transactions per account per month over 12 months
+    const perMonth = account.type === 'crypto' ? 5 : account.type === 'investment' ? 3 : 4
+    const months = 12
 
-      const template = templates[Math.floor(Math.random() * templates.length)]
-      const baseAmount =
-        account.currency === 'ARS'
-          ? Math.floor(Math.random() * 500_000) + 5_000
-          : Math.floor(Math.random() * 2_500) + 25
-      const amount = template.sign * baseAmount
+    for (let m = 0; m < months; m++) {
+      const count = perMonth + Math.floor(rand() * 3) - 1 // slight variation
+      for (let i = 0; i < count; i++) {
+        const daysAgo = m * 30 + Math.floor(rand() * 30)
+        const date = new Date()
+        date.setDate(date.getDate() - daysAgo)
+        date.setHours(
+          Math.floor(rand() * 14) + 8,
+          Math.floor(rand() * 60),
+          0,
+          0
+        )
 
-      txs.push({
-        id: `${account.id}-${i}-${date.getTime()}`,
-        accountId: account.id,
-        accountName: account.name,
-        description: template.description,
-        amount,
-        currency: account.currency,
-        type: template.type,
-        timestamp: date,
-      })
+        const template = templates[Math.floor(rand() * templates.length)]
+        const baseAmount =
+          account.currency === 'ARS'
+            ? Math.floor(rand() * 500_000) + 5_000
+            : Math.floor(rand() * 2_500) + 25
+        const amount = template.sign * baseAmount
+
+        txs.push({
+          id: `${account.id}-${m}-${i}-${daysAgo}`,
+          accountId: account.id,
+          accountName: account.name,
+          description: template.description,
+          amount,
+          currency: account.currency,
+          type: template.type,
+          timestamp: date,
+        })
+      }
     }
   })
 
