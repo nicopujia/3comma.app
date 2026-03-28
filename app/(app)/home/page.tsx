@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -78,6 +79,7 @@ function CashDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
       <DialogContent className="max-w-sm rounded-2xl">
         <DialogHeader>
           <DialogTitle className="text-base font-semibold">Manual Cash</DialogTitle>
+          <DialogDescription>Add a transaction or set your current cash balance</DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="transaction" className="w-full">

@@ -265,6 +265,8 @@ export default function AnalysisPage() {
           <div className="flex flex-col">
             {filteredTxs.map((tx, i) => {
               const isPositive = tx.amount > 0
+              const account = accounts.find((a) => a.id === tx.accountId)
+              const accountInitial = account?.name.charAt(0).toUpperCase() ?? 'A'
               return (
                 <button
                   key={tx.id}
@@ -275,12 +277,10 @@ export default function AnalysisPage() {
                   )}
                 >
                   <div
-                    className={cn(
-                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold uppercase',
-                      isPositive ? 'bg-positive/10 text-positive' : 'bg-negative/10 text-negative'
-                    )}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold uppercase text-foreground"
+                    style={{ backgroundColor: account?.color ?? '#666', opacity: 0.2 }}
                   >
-                    {tx.type.charAt(0).toUpperCase()}
+                    {accountInitial}
                   </div>
 
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
