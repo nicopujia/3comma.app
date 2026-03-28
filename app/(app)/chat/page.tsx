@@ -48,6 +48,10 @@ const SUGGESTED = [
   'What were my biggest expenses recently?',
 ]
 
+// Nav bar height + safe area — matches the fixed nav in layout.tsx
+// py-3 (12px × 2) + icon 20px + gap-1 (4px) + label 10px = 58px ≈ 3.625rem
+const NAV_HEIGHT = 'calc(3.625rem + env(safe-area-inset-bottom))'
+
 export default function ChatPage() {
   const accounts = useAppStore((s) => s.accounts)
   const transactions = useAppStore((s) => s.transactions)
@@ -67,6 +71,7 @@ export default function ChatPage() {
   })
 
   const isLoading = status === 'streaming' || status === 'submitted'
+  const isEmpty = messages.length === 0
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -77,6 +82,9 @@ export default function ChatPage() {
     if (!text || isLoading) return
     sendMessage({ text })
     setInput('')
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto'
+    }
     inputRef.current?.focus()
   }
 
@@ -88,17 +96,15 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-dvh flex-col">
-      {/* Header */}
-      <div className="shrink-0 border-b border-border px-6 py-5">
-        <h1 className="text-base font-semibold">Finance Assistant</h1>
-        <p className="text-xs text-muted-foreground">Ask anything about your money</p>
-      </div>
-
-      {/* Messages — only scrollable when there are messages */}
-      <div className={cn('flex flex-col gap-4 px-4', messages.length === 0 ? 'flex-1 justify-end pb-4' : 'flex-1 overflow-y-auto py-6')}>
-        {messages.length === 0 && (
-          <div className="flex flex-col gap-2">
+    // Fixed overlay that sits between the top and the nav bar
+    <div
+      className="fixed inset-x-0 top-0 z-40 flex flex-col bg-background"
+      style={{ bottom: NAV_HEIGHT }}
+    >
+      {/* Scrollable messages */}
+      <div className="flex-1 overflow-y-auto">
+        {isEmpty ? (
+          <div className="flex h-full flex-col justify-end gap-2 px-4 py-4">
             <p className="pb-2 text-center text-sm text-muted-foreground">
               Your personal finance assistant is ready.
             </p>
@@ -112,55 +118,54 @@ export default function ChatPage() {
               </button>
             ))}
           </div>
-        )}
+        ) : (
+          <div className="flex flex-col gap-4 px-4 py-6">
+            {messages.map((msg) => {
+              const isUser = msg.role === 'user'
+              const text = msg.parts
+                .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+                .map((p) => p.text)
+                .join('')
 
-        {messages.map((msg) => {
-          const isUser = msg.role === 'user'
-          const text = msg.parts
-            .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-            .map((p) => p.text)
-            .join('')
+              return (
+                <div key={msg.id} className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
+                  <div
+                    className={cn(
+                      'max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+                      isUser
+                        ? 'rounded-br-sm bg-foreground text-background'
+                        : 'rounded-bl-sm bg-card text-foreground'
+                    )}
+                  >
+                    {text}
+                  </div>
+                </div>
+              )
+            })}
 
-          return (
-            <div
-              key={msg.id}
-              className={cn('flex', isUser ? 'justify-end' : 'justify-start')}
-            >
-              <div
-                className={cn(
-                  'max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
-                  isUser
-                    ? 'rounded-br-sm bg-foreground text-background'
-                    : 'rounded-bl-sm bg-card text-foreground'
-                )}
-              >
-                {text}
+            {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
+              <div className="flex justify-start">
+                <div className="rounded-2xl rounded-bl-sm bg-card px-4 py-3">
+                  <div className="flex gap-1">
+                    {[0, 1, 2].map((i) => (
+                      <span
+                        key={i}
+                        className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50"
+                        style={{ animationDelay: `${i * 150}ms` }}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          )
-        })}
+            )}
 
-        {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
-          <div className="flex justify-start">
-            <div className="rounded-2xl rounded-bl-sm bg-card px-4 py-3">
-              <div className="flex gap-1">
-                {[0, 1, 2].map((i) => (
-                  <span
-                    key={i}
-                    className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50"
-                    style={{ animationDelay: `${i * 150}ms` }}
-                  />
-                ))}
-              </div>
-            </div>
+            <div ref={bottomRef} />
           </div>
         )}
-
-        <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="shrink-0 border-t border-border bg-background/90 backdrop-blur-xl safe-bottom">
+      {/* Input — pinned to the bottom edge, directly above the nav bar */}
+      <div className="shrink-0 border-t border-border bg-background/95 backdrop-blur-xl">
         <div className="flex items-end gap-2 px-4 py-3">
           <textarea
             ref={inputRef}

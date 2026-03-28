@@ -47,19 +47,21 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   )
 }
 
-// Typewriter component that streams text character by character
+// Typewriter component that streams text character by character.
+// The full text is rendered invisibly first so the container height is locked,
+// preventing reflow/jumping as characters are revealed.
 function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) {
-  const [displayed, setDisplayed] = useState('')
+  const [count, setCount] = useState(0)
   const [done, setDone] = useState(false)
 
   useEffect(() => {
-    setDisplayed('')
+    setCount(0)
     setDone(false)
     if (!text) return
     let i = 0
     const id = setInterval(() => {
       i++
-      setDisplayed(text.slice(0, i))
+      setCount(i)
       if (i >= text.length) {
         clearInterval(id)
         setDone(true)
@@ -70,9 +72,14 @@ function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) 
   }, [text])
 
   return (
-    <span>
-      {displayed}
-      {!done && <span className="ml-px inline-block h-3.5 w-0.5 animate-pulse bg-foreground/60 align-middle" />}
+    <span className="relative">
+      {/* Ghost: full text, invisible — locks the container height */}
+      <span aria-hidden className="invisible">{text}</span>
+      {/* Revealed text overlaid absolutely */}
+      <span className="absolute inset-0">
+        {text.slice(0, count)}
+        {!done && <span className="ml-px inline-block h-3.5 w-0.5 animate-pulse bg-foreground/60 align-middle" />}
+      </span>
     </span>
   )
 }
