@@ -165,8 +165,8 @@ export function Onboarding() {
                       Best value
                     </span>
                   </div>
-                  <span className="text-base font-semibold text-foreground">$333 / year</span>
-                  <span className="text-sm text-muted-foreground">$27.75 per month — save 16%</span>
+                  <span className="text-base font-semibold text-foreground">$66.6 / year</span>
+                  <span className="text-sm text-muted-foreground">$5.55 per month — save 17%</span>
                   {plan === 'yearly' && (
                     <div className="absolute bottom-4 right-4 flex h-5 w-5 items-center justify-center rounded-full bg-foreground">
                       <Check className="h-3 w-3 text-background" strokeWidth={3} />
@@ -180,7 +180,7 @@ export function Onboarding() {
                     plan === 'monthly' ? 'border-foreground bg-foreground/5' : 'border-border bg-card hover:bg-muted/30'
                   )}
                 >
-                  <span className="text-base font-semibold text-foreground">$33 / month</span>
+                  <span className="text-base font-semibold text-foreground">$6.66 / month</span>
                   <span className="text-sm text-muted-foreground">Billed monthly, no commitment</span>
                   {plan === 'monthly' && (
                     <div className="absolute bottom-4 right-4 flex h-5 w-5 items-center justify-center rounded-full bg-foreground">
@@ -197,7 +197,7 @@ export function Onboarding() {
               onClick={() => setStep(3)}
               className="mt-6 w-full cursor-pointer rounded-2xl bg-foreground py-4 text-base font-semibold text-background transition-opacity hover:opacity-90 active:opacity-70"
             >
-              Continue with {plan === 'yearly' ? '$333/yr' : '$33/mo'}
+              Continue with {plan === 'yearly' ? '$66.6/yr' : '$6.66/mo'}
             </button>
           </div>
         )}
