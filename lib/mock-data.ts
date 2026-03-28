@@ -111,6 +111,7 @@ export function toUSD(balance: number, currency: Currency): number {
 }
 
 // Generate historical data for an account subset
+// Uses a seed derived from each date so the same day always produces the same value
 export function generateHistoricalData(
   accounts: Account[],
   days: number
@@ -126,9 +127,13 @@ export function generateHistoricalData(
     const date = new Date(now)
     date.setDate(date.getDate() - i)
 
-    const progress = (days - i) / days
-    const trend = 1 - progress * 0.08
-    const noise = (Math.random() - 0.5) * 0.04
+    // Seed from the calendar date so the value is stable across range switches
+    const dateSeed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
+    const rand = seededRandom(dateSeed)
+
+    // Trend based on absolute days ago so the same date has the same trend in any range
+    const trend = 1 - (i / 730) * 0.08
+    const noise = (rand() - 0.5) * 0.04
     const cryptoSwing = Math.sin(i * 0.3) * 0.02
     const value = baseTotal * (trend + noise + cryptoSwing)
 
