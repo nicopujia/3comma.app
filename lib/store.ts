@@ -85,7 +85,7 @@ export const useAppStore = create<AppStore>()(
             description: description || (amount > 0 ? 'Cash received' : 'Cash spent'),
             amount,
             currency: 'USD',
-            type: amount > 0 ? 'deposit' : 'payment',
+            type: amount > 0 ? 'inflow' : 'outflow',
             timestamp: new Date(),
           }
           const cashAccount = state.accounts.find((a) => a.id === 'manual-cash')
@@ -113,7 +113,7 @@ export const useAppStore = create<AppStore>()(
                     ...t,
                     description: description || t.description,
                     amount,
-                    type: amount > 0 ? 'deposit' : ('payment' as Transaction['type']),
+                    type: (amount > 0 ? 'inflow' : 'outflow') as Transaction['type'],
                   }
                 : t
             ),

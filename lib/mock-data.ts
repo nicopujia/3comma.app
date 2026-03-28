@@ -19,7 +19,7 @@ export interface Transaction {
   description: string
   amount: number
   currency: Currency
-  type: 'deposit' | 'withdrawal' | 'transfer' | 'trade' | 'fee' | 'payment' | 'buy' | 'sell'
+  type: 'inflow' | 'outflow'
   timestamp: Date
 }
 
@@ -184,64 +184,60 @@ interface AccountTxTemplate {
 
 const ACCOUNT_TX_TEMPLATES: Record<string, AccountTxTemplate[]> = {
   wallbit: [
-    { description: 'Salary deposit', type: 'deposit', sign: 1 },
-    { description: 'Wire transfer received', type: 'deposit', sign: 1 },
-    { description: 'Freelance payment', type: 'deposit', sign: 1 },
-    { description: 'Account fee', type: 'fee', sign: -1 },
-    { description: 'Transfer to Wise', type: 'transfer', sign: -1 },
-    { description: 'Netflix subscription', type: 'payment', sign: -1 },
-    { description: 'Transfer to GrabrFi', type: 'transfer', sign: -1 },
-    { description: 'Freelance invoice', type: 'deposit', sign: 1 },
+    { description: 'Salary deposit', type: 'inflow', sign: 1 },
+    { description: 'Wire transfer received', type: 'inflow', sign: 1 },
+    { description: 'Freelance payment', type: 'inflow', sign: 1 },
+    { description: 'Account fee', type: 'outflow', sign: -1 },
+    { description: 'Transfer to Wise', type: 'outflow', sign: -1 },
+    { description: 'Netflix subscription', type: 'outflow', sign: -1 },
+    { description: 'Transfer to GrabrFi', type: 'outflow', sign: -1 },
+    { description: 'Freelance invoice', type: 'inflow', sign: 1 },
   ],
   grabrfi: [
-    { description: 'Client payment received', type: 'deposit', sign: 1 },
-    { description: 'Transfer to Wise', type: 'transfer', sign: -1 },
-    { description: 'Monthly subscription', type: 'payment', sign: -1 },
-    { description: 'Inbound wire', type: 'deposit', sign: 1 },
-    { description: 'SaaS tool payment', type: 'payment', sign: -1 },
-    { description: 'Consulting fee received', type: 'deposit', sign: 1 },
+    { description: 'Client payment received', type: 'inflow', sign: 1 },
+    { description: 'Transfer to Wise', type: 'outflow', sign: -1 },
+    { description: 'Monthly subscription', type: 'outflow', sign: -1 },
+    { description: 'Inbound wire', type: 'inflow', sign: 1 },
+    { description: 'SaaS tool payment', type: 'outflow', sign: -1 },
+    { description: 'Consulting fee received', type: 'inflow', sign: 1 },
   ],
   wise: [
-    { description: 'International transfer received', type: 'deposit', sign: 1 },
-    { description: 'Currency conversion fee', type: 'fee', sign: -1 },
-    { description: 'Invoice received', type: 'deposit', sign: 1 },
-    { description: 'Transfer to Brubank', type: 'transfer', sign: -1 },
-    { description: 'Contractor payment', type: 'payment', sign: -1 },
-    { description: 'Hosting payment', type: 'payment', sign: -1 },
+    { description: 'International transfer received', type: 'inflow', sign: 1 },
+    { description: 'Currency conversion fee', type: 'outflow', sign: -1 },
+    { description: 'Invoice received', type: 'inflow', sign: 1 },
+    { description: 'Transfer to Brubank', type: 'outflow', sign: -1 },
+    { description: 'Contractor payment', type: 'outflow', sign: -1 },
+    { description: 'Hosting payment', type: 'outflow', sign: -1 },
   ],
   brubank: [
-    { description: 'Grocery payment', type: 'payment', sign: -1 },
-    { description: 'Utility bill', type: 'payment', sign: -1 },
-    { description: 'ATM withdrawal', type: 'withdrawal', sign: -1 },
-    { description: 'Salary credit', type: 'deposit', sign: 1 },
-    { description: 'Cafe purchase', type: 'payment', sign: -1 },
-    { description: 'Transfer received', type: 'deposit', sign: 1 },
-    { description: 'Fuel payment', type: 'payment', sign: -1 },
+    { description: 'Grocery payment', type: 'outflow', sign: -1 },
+    { description: 'Utility bill', type: 'outflow', sign: -1 },
+    { description: 'ATM withdrawal', type: 'outflow', sign: -1 },
+    { description: 'Salary credit', type: 'inflow', sign: 1 },
+    { description: 'Cafe purchase', type: 'outflow', sign: -1 },
+    { description: 'Transfer received', type: 'inflow', sign: 1 },
+    { description: 'Fuel payment', type: 'outflow', sign: -1 },
   ],
   binance: [
-    { description: 'BTC purchase', type: 'buy', sign: -1 },
-    { description: 'ETH sell', type: 'sell', sign: 1 },
-    { description: 'USDT deposit', type: 'deposit', sign: 1 },
-    { description: 'Trading fee', type: 'fee', sign: -1 },
-    { description: 'BTC sell', type: 'sell', sign: 1 },
-    { description: 'SOL buy', type: 'buy', sign: -1 },
-    { description: 'USDT withdrawal', type: 'withdrawal', sign: -1 },
-    { description: 'ETH purchase', type: 'buy', sign: -1 },
-    { description: 'Spot trade', type: 'trade', sign: 1 },
+    { description: 'BTC purchase', type: 'outflow', sign: -1 },
+    { description: 'ETH sell', type: 'inflow', sign: 1 },
+    { description: 'USDT deposit', type: 'inflow', sign: 1 },
+    { description: 'Trading fee', type: 'outflow', sign: -1 },
+    { description: 'BTC sell', type: 'inflow', sign: 1 },
+    { description: 'SOL buy', type: 'outflow', sign: -1 },
+    { description: 'USDT withdrawal', type: 'outflow', sign: -1 },
+    { description: 'ETH purchase', type: 'outflow', sign: -1 },
   ],
   ibkr: [
-    { description: 'Stock purchase', type: 'buy', sign: -1 },
-    { description: 'Dividend received', type: 'deposit', sign: 1 },
-    { description: 'Options trade', type: 'trade', sign: 1 },
-    { description: 'Portfolio rebalance', type: 'sell', sign: 1 },
-    { description: 'ETF purchase', type: 'buy', sign: -1 },
-    { description: 'Commission fee', type: 'fee', sign: -1 },
+    { description: 'Stock purchase', type: 'outflow', sign: -1 },
+    { description: 'Dividend received', type: 'inflow', sign: 1 },
+    { description: 'Portfolio rebalance sell', type: 'inflow', sign: 1 },
+    { description: 'ETF purchase', type: 'outflow', sign: -1 },
+    { description: 'Commission fee', type: 'outflow', sign: -1 },
   ],
   'manual-cash': [
-    { description: 'Cash deposit', type: 'deposit', sign: 1 },
-    { description: 'Cash withdrawal', type: 'withdrawal', sign: -1 },
-    { description: 'Cash received', type: 'deposit', sign: 1 },
-    { description: 'Cash spent', type: 'payment', sign: -1 },
+    { description: 'Cash received', type: 'inflow', sign: 1 },
+    { description: 'Cash spent', type: 'outflow', sign: -1 },
   ],
 }
 
@@ -250,7 +246,7 @@ export function generateTransactions(accounts: Account[]): Transaction[] {
 
   accounts.forEach((account) => {
     const templates = ACCOUNT_TX_TEMPLATES[account.id] ?? [
-      { description: 'Transaction', type: 'deposit' as const, sign: 1 as const },
+      { description: 'Transaction', type: 'inflow' as const, sign: 1 as const },
     ]
     const count = account.type === 'crypto' ? 10 : account.type === 'investment' ? 5 : 7
 

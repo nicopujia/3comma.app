@@ -25,19 +25,9 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet'
 
-const INCOME_TYPES = new Set<Transaction['type']>(['deposit', 'sell'])
-const EXPENSE_TYPES = new Set<Transaction['type']>(['payment', 'fee', 'withdrawal'])
-const ALL_TYPES: Transaction['type'][] = ['deposit', 'withdrawal', 'payment', 'fee', 'buy', 'sell', 'trade', 'transfer']
-
 const TYPE_LABEL: Record<Transaction['type'], string> = {
-  deposit: 'Deposit',
-  withdrawal: 'Withdrawal',
-  transfer: 'Transfer',
-  trade: 'Trade',
-  fee: 'Fee',
-  payment: 'Payment',
-  buy: 'Buy',
-  sell: 'Sell',
+  inflow: 'Inflow',
+  outflow: 'Outflow',
 }
 
 type FlowFilter = 'All' | 'Income' | 'Expenses'
@@ -122,8 +112,8 @@ export default function TransactionsPage() {
       // Search
       if (q && !tx.description.toLowerCase().includes(q) && !tx.accountName.toLowerCase().includes(q)) return false
       // Flow
-      if (flowFilter === 'Income' && !INCOME_TYPES.has(tx.type)) return false
-      if (flowFilter === 'Expenses' && !EXPENSE_TYPES.has(tx.type)) return false
+      if (flowFilter === 'Income' && tx.type !== 'inflow') return false
+      if (flowFilter === 'Expenses' && tx.type !== 'outflow') return false
       // Types
       if (selectedTypes.size > 0 && !selectedTypes.has(tx.type)) return false
       // Accounts
@@ -323,7 +313,7 @@ export default function TransactionsPage() {
             <div className="flex flex-col gap-2">
               <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Type</p>
               <div className="flex flex-wrap gap-2">
-                {ALL_TYPES.map((t) => (
+                {(['inflow', 'outflow'] as Transaction['type'][]).map((t) => (
                   <button
                     key={t}
                     onClick={() => toggleType(t)}

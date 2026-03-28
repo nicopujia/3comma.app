@@ -1,19 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppStore } from '@/lib/store'
 import NumberFlow from '@number-flow/react'
 
 export default function WidgetPage() {
   const totalLiquidityUSD = useAppStore((s) => s.totalLiquidityUSD)
-  const [hydrated, setHydrated] = useState(false)
   const [total, setTotal] = useState(0)
+  const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    setHydrated(true)
     setTotal(totalLiquidityUSD())
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    setHydrated(true)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!hydrated) return null
 
