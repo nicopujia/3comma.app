@@ -78,7 +78,7 @@ function CashDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-sm rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="text-base font-semibold">Manual Cash</DialogTitle>
+          <DialogTitle className="text-base font-semibold">Cash</DialogTitle>
           <DialogDescription>Add a transaction or set your current cash balance</DialogDescription>
         </DialogHeader>
 
@@ -186,7 +186,7 @@ export default function HomePage() {
     .reduce((sum, a) => sum + toUSD(a.balance, a.currency), 0)
 
   return (
-    <div className="flex min-h-[calc(100dvh-6rem)] flex-col">
+    <div className="flex h-full min-h-0 max-h-full flex-col overflow-hidden">
       {/* Hero — always visible */}
       <div className="shrink-0 flex flex-col gap-1 px-6 pb-10 pt-16">
         <div className="flex items-end gap-0">
@@ -203,7 +203,7 @@ export default function HomePage() {
       <div className="mx-6 shrink-0 h-px bg-border" />
 
       {/* Collapsible accounts section — scrolls independently */}
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <button
           onClick={() => setAccountsOpen((v) => !v)}
           className="shrink-0 flex cursor-pointer items-center justify-between px-6 py-4 transition-colors hover:bg-muted/50"
@@ -219,7 +219,7 @@ export default function HomePage() {
         </button>
 
         {accountsOpen && (
-          <div className="flex flex-col overflow-y-auto animate-in slide-in-from-top-2 fade-in-0 duration-200">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain animate-in slide-in-from-top-2 fade-in-0 duration-200">
             {accounts.map((account, i) => {
               const usdValue = toUSD(account.balance, account.currency)
               const percent =

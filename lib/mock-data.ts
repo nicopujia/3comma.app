@@ -94,7 +94,7 @@ export const ALL_ACCOUNTS: Account[] = [
   },
   {
     id: 'manual-cash',
-    name: 'Manual Cash',
+    name: 'Cash',
     type: 'cash',
     currency: 'USD',
     balance: 1200.0,

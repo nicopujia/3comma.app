@@ -14,6 +14,8 @@ const TABS = [
   { label: 'Analysis', href: '/analysis', Icon: BarChart2 },
 ]
 
+const NAV_HEIGHT = 'calc(3.5rem + env(safe-area-inset-bottom))'
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const onboardingComplete = useAppStore((s) => s.onboardingComplete)
   const router = useRouter()
@@ -31,9 +33,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!hydrated) return null
   if (!onboardingComplete) return null
 
+  const isHome = pathname === '/home'
+
   return (
-    <div className="flex min-h-dvh flex-col bg-background font-sans">
-      <main key={pathname} className="flex-1 overflow-y-auto pb-24 animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
+    <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background font-sans">
+      <main
+        key={pathname}
+        className={cn(
+          'min-h-0 flex-1 animate-in fade-in-0 slide-in-from-bottom-2 duration-200',
+          isHome ? 'overflow-hidden' : 'overflow-y-auto'
+        )}
+        style={{ paddingBottom: NAV_HEIGHT }}
+      >
         {children}
       </main>
 
