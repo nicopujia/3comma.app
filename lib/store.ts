@@ -10,6 +10,9 @@ import {
   generateTransactions,
 } from './mock-data'
 
+const CASH_ACCOUNT_ID = 'manual-cash'
+const CASH_ACCOUNT_NAME = 'Cash'
+
 interface PersistedState {
   onboardingComplete: boolean
   selectedAccountIds: string[]
@@ -72,25 +75,25 @@ export const useAppStore = create<AppStore>()(
       setCashBalance: (amount: number) =>
         set((state) => ({
           accounts: state.accounts.map((a) =>
-            a.id === 'manual-cash' ? { ...a, balance: Math.max(0, amount) } : a
+            a.id === CASH_ACCOUNT_ID ? { ...a, balance: Math.max(0, amount) } : a
           ),
         })),
 
       addCashTransaction: (description: string, amount: number) => {
         set((state) => {
           const newTx: Transaction = {
-            id: `manual-cash-${Date.now()}`,
-            accountId: 'manual-cash',
-            accountName: 'Manual Cash',
+            id: `${CASH_ACCOUNT_ID}-${Date.now()}`,
+            accountId: CASH_ACCOUNT_ID,
+            accountName: CASH_ACCOUNT_NAME,
             description: description || (amount > 0 ? 'Cash received' : 'Cash spent'),
             amount,
             currency: 'USD',
             type: amount > 0 ? 'inflow' : 'outflow',
             timestamp: new Date(),
           }
-          const cashAccount = state.accounts.find((a) => a.id === 'manual-cash')
+          const cashAccount = state.accounts.find((a) => a.id === CASH_ACCOUNT_ID)
           const updatedAccounts = state.accounts.map((a) =>
-            a.id === 'manual-cash'
+            a.id === CASH_ACCOUNT_ID
               ? { ...a, balance: Math.max(0, a.balance + amount) }
               : a
           )
@@ -118,7 +121,7 @@ export const useAppStore = create<AppStore>()(
                 : t
             ),
             accounts: state.accounts.map((a) =>
-              a.id === 'manual-cash'
+              a.id === CASH_ACCOUNT_ID
                 ? { ...a, balance: Math.max(0, a.balance + delta) }
                 : a
             ),
@@ -151,8 +154,12 @@ export const useAppStore = create<AppStore>()(
         return {
           ...current,
           ...p,
+          accounts: (p.accounts ?? []).map((account) =>
+            account.id === CASH_ACCOUNT_ID ? { ...account, name: CASH_ACCOUNT_NAME } : account
+          ),
           transactions: (p.transactions ?? []).map((tx) => ({
             ...tx,
+            accountName: tx.accountId === CASH_ACCOUNT_ID ? CASH_ACCOUNT_NAME : tx.accountName,
             timestamp: new Date(tx.timestamp),
             type: INFLOW_TYPES.has(tx.type) ? 'inflow' : 'outflow',
           })),
