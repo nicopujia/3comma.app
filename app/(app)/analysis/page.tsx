@@ -280,7 +280,7 @@ export default function AnalysisPage() {
           <div className="rounded-2xl bg-negative/8 px-3 py-3">
             <div className="text-[11px] font-medium uppercase tracking-widest text-negative/80">Money out</div>
             <div className="mt-1 text-sm font-semibold tabular-nums text-negative">
-              -{formatAmount(moneyOut, 'USD')}
+              {formatAmount(moneyOut, 'USD')}
             </div>
           </div>
           <div
