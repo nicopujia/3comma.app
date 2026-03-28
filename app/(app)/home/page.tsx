@@ -188,7 +188,7 @@ export default function HomePage() {
   return (
     <div className="flex h-full min-h-0 max-h-full flex-col overflow-hidden">
       {/* Hero — always visible */}
-      <div className="shrink-0 flex flex-col gap-1 px-6 pb-10 pt-16">
+      <div className="shrink-0 flex min-h-[26vh] flex-col justify-center gap-1 px-6">
         <div className="flex items-end gap-0">
           <span className="mt-1 self-start pt-3 text-3xl font-light text-muted-foreground">$</span>
           <NumberFlow
