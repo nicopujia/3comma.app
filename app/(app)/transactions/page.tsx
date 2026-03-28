@@ -134,9 +134,8 @@ export default function TransactionsPage() {
 
   const toggleType = (t: Transaction['type']) => {
     setSelectedTypes((prev) => {
-      const next = new Set(prev)
-      next.has(t) ? next.delete(t) : next.add(t)
-      return next
+      if (prev.has(t)) return new Set()
+      return new Set([t])
     })
   }
 
@@ -160,7 +159,7 @@ export default function TransactionsPage() {
   return (
     <div className="flex min-h-dvh flex-col bg-background animate-in slide-in-from-right-4 duration-200">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-border px-4 pt-12 pb-3">
+      <div className="flex items-center gap-3 border-b border-border px-4 pt-4 pb-3">
         <Link
           href="/analysis"
           className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-muted"
