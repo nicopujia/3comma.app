@@ -24,6 +24,7 @@ interface AppStore extends PersistedState {
   updateBalance: (id: string, delta: number) => void
   setCashBalance: (amount: number) => void
   addCashTransaction: (description: string, amount: number) => void
+  updateCashTransaction: (id: string, description: string, amount: number) => void
   totalLiquidityUSD: () => number
   activeAccounts: () => Account[]
 }
@@ -96,6 +97,31 @@ export const useAppStore = create<AppStore>()(
           return {
             accounts: cashAccount ? updatedAccounts : state.accounts,
             transactions: [newTx, ...state.transactions],
+          }
+        })
+      },
+
+      updateCashTransaction: (id: string, description: string, amount: number) => {
+        set((state) => {
+          const oldTx = state.transactions.find((t) => t.id === id)
+          if (!oldTx) return {}
+          const delta = amount - oldTx.amount
+          return {
+            transactions: state.transactions.map((t) =>
+              t.id === id
+                ? {
+                    ...t,
+                    description: description || t.description,
+                    amount,
+                    type: amount > 0 ? 'deposit' : ('payment' as Transaction['type']),
+                  }
+                : t
+            ),
+            accounts: state.accounts.map((a) =>
+              a.id === 'manual-cash'
+                ? { ...a, balance: Math.max(0, a.balance + delta) }
+                : a
+            ),
           }
         })
       },

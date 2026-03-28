@@ -10,10 +10,21 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { getHistoricalData, getAIExplanation, Transaction, toUSD } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 
 const RANGES = ['1W', '1M', '3M', '6M', '1Y', 'ALL'] as const
 type Range = (typeof RANGES)[number]
@@ -90,17 +101,76 @@ function isRealFlow(tx: Transaction): boolean {
   return INCOME_TYPES.has(tx.type) || EXPENSE_TYPES.has(tx.type)
 }
 
+function EditCashTxDialog({
+  tx,
+  onClose,
+}: {
+  tx: Transaction | null
+  onClose: () => void
+}) {
+  const updateCashTransaction = useAppStore((s) => s.updateCashTransaction)
+  const [description, setDescription] = useState(tx?.description ?? '')
+  const [amount, setAmount] = useState(tx ? String(Math.abs(tx.amount)) : '')
+  const sign = tx && tx.amount < 0 ? -1 : 1
+
+  if (!tx) return null
+
+  const handleSave = () => {
+    const val = parseFloat(amount)
+    if (isNaN(val) || val <= 0) return
+    updateCashTransaction(tx.id, description, sign * val)
+    toast('Transaction updated')
+    onClose()
+  }
+
+  return (
+    <Dialog open={!!tx} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-sm rounded-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-base font-semibold">Edit Transaction</DialogTitle>
+          <DialogDescription>Update this cash transaction</DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-4 pt-1">
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs text-muted-foreground">Description</Label>
+            <Input
+              placeholder="e.g. Coffee, ATM"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="rounded-xl"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs text-muted-foreground">
+              Amount (USD) — {sign > 0 ? 'received' : 'spent'}
+            </Label>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="rounded-xl tabular-nums"
+            />
+          </div>
+          <Button onClick={handleSave} className="w-full cursor-pointer rounded-xl">
+            Save
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export default function AnalysisPage() {
   const [range, setRange] = useState<Range>('1M')
   const [txFilter, setTxFilter] = useState<TxFilter>('All')
+  const [txOpen, setTxOpen] = useState(false)
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null)
   const accounts = useAppStore((s) => s.accounts)
   const transactions = useAppStore((s) => s.transactions)
   const totalLiquidityUSD = useAppStore((s) => s.totalLiquidityUSD)
   const total = totalLiquidityUSD()
-
-  console.log('[v0] transactions in store:', transactions.length)
-  console.log('[v0] first tx:', transactions[0])
-  console.log('[v0] accounts in store:', accounts.length, accounts.map((a) => a.id))
 
   const historicalData = useMemo(() => getHistoricalData(accounts, range), [accounts, range])
 
@@ -140,6 +210,10 @@ export default function AnalysisPage() {
   }, [transactions, activeAccountIds, txFilter])
 
   const handleTxTap = (tx: Transaction) => {
+    if (tx.accountId === 'manual-cash') {
+      setEditingTx(tx)
+      return
+    }
     const account = accounts.find((a) => a.id === tx.accountId)
     if (account?.deepLink) {
       toast(`Opening ${tx.accountName}...`, { duration: 2000 })
@@ -232,88 +306,102 @@ export default function AnalysisPage() {
 
       {/* Transactions */}
       <div className="mx-6 mt-6 h-px bg-border" />
-      <div className="flex flex-col gap-0 pt-5">
-        <div className="flex items-center justify-between px-6 pb-4">
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+      <div className="flex flex-col">
+        <button
+          onClick={() => setTxOpen((v) => !v)}
+          className="flex cursor-pointer items-center justify-between px-6 py-4 transition-colors hover:bg-muted/50"
+        >
+          <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
             Transactions
-          </p>
-        </div>
+          </span>
+          {txOpen ? (
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          )}
+        </button>
 
-        {/* Filter bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto px-5 pb-4 no-scrollbar">
-          {TX_FILTERS.map((f) => (
-            <button
-              key={f}
-              onClick={() => setTxFilter(f)}
-              className={cn(
-                'shrink-0 cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all',
-                txFilter === f
-                  ? 'bg-foreground text-background'
-                  : 'bg-card text-muted-foreground hover:bg-muted active:bg-muted'
-              )}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-
-        {filteredTxs.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 px-6 py-12">
-            <p className="text-sm text-muted-foreground">No transactions</p>
-          </div>
-        ) : (
-          <div className="flex flex-col">
-            {filteredTxs.map((tx, i) => {
-              const isPositive = tx.amount > 0
-              const account = accounts.find((a) => a.id === tx.accountId)
-              const accountInitial = account?.name.charAt(0).toUpperCase() ?? 'A'
-              return (
+        {txOpen && (
+          <>
+            {/* Filter bar */}
+            <div className="flex items-center gap-1.5 overflow-x-auto px-5 pb-4 no-scrollbar">
+              {TX_FILTERS.map((f) => (
                 <button
-                  key={tx.id}
-                  onClick={() => handleTxTap(tx)}
+                  key={f}
+                  onClick={() => setTxFilter(f)}
                   className={cn(
-                    'flex cursor-pointer items-center gap-4 px-6 py-4 text-left transition-colors hover:bg-muted/50 active:bg-muted',
-                    i !== filteredTxs.length - 1 && 'border-b border-border'
+                    'shrink-0 cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all',
+                    txFilter === f
+                      ? 'bg-foreground text-background'
+                      : 'bg-card text-muted-foreground hover:bg-muted active:bg-muted'
                   )}
                 >
-                  <div
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold uppercase text-foreground"
-                    style={{ backgroundColor: account?.color ?? '#666', opacity: 0.2 }}
-                  >
-                    {accountInitial}
-                  </div>
-
-                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="truncate text-sm font-medium text-foreground">
-                        {tx.description}
-                      </span>
-                      <span
-                        className={cn(
-                          'shrink-0 tabular-nums text-sm font-semibold',
-                          isPositive ? 'text-positive' : 'text-negative'
-                        )}
-                      >
-                        {isPositive ? '+' : '-'}
-                        {formatAmount(tx.amount, tx.currency)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-muted-foreground">{tx.accountName}</span>
-                      <span className="text-xs text-muted-foreground/30">·</span>
-                      <span className="text-xs text-muted-foreground/60">{TYPE_LABEL[tx.type]}</span>
-                      <span className="text-xs text-muted-foreground/30">·</span>
-                      <span className="text-xs text-muted-foreground/50">
-                        {formatTimestamp(tx.timestamp)}
-                      </span>
-                    </div>
-                  </div>
+                  {f}
                 </button>
-              )
-            })}
-          </div>
+              ))}
+            </div>
+
+            {filteredTxs.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 px-6 py-12">
+                <p className="text-sm text-muted-foreground">No transactions</p>
+              </div>
+            ) : (
+              <div className="flex flex-col">
+                {filteredTxs.map((tx, i) => {
+                  const isPositive = tx.amount > 0
+                  const account = accounts.find((a) => a.id === tx.accountId)
+                  const accountInitial = account?.name.charAt(0).toUpperCase() ?? 'A'
+                  return (
+                    <button
+                      key={tx.id}
+                      onClick={() => handleTxTap(tx)}
+                      className={cn(
+                        'flex cursor-pointer items-center gap-4 px-6 py-4 text-left transition-colors hover:bg-muted/50 active:bg-muted',
+                        i !== filteredTxs.length - 1 && 'border-b border-border'
+                      )}
+                    >
+                      <div
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold uppercase text-foreground"
+                        style={{ backgroundColor: account?.color ?? '#666', opacity: 0.2 }}
+                      >
+                        {accountInitial}
+                      </div>
+
+                      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="truncate text-sm font-medium text-foreground">
+                            {tx.description}
+                          </span>
+                          <span
+                            className={cn(
+                              'shrink-0 tabular-nums text-sm font-semibold',
+                              isPositive ? 'text-positive' : 'text-negative'
+                            )}
+                          >
+                            {isPositive ? '+' : '-'}
+                            {formatAmount(tx.amount, tx.currency)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-muted-foreground">{tx.accountName}</span>
+                          <span className="text-xs text-muted-foreground/30">·</span>
+                          <span className="text-xs text-muted-foreground/60">{TYPE_LABEL[tx.type]}</span>
+                          <span className="text-xs text-muted-foreground/30">·</span>
+                          <span className="text-xs text-muted-foreground/50">
+                            {formatTimestamp(tx.timestamp)}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
+
+      <EditCashTxDialog tx={editingTx} onClose={() => setEditingTx(null)} />
     </div>
   )
 }
