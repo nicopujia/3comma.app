@@ -26,8 +26,8 @@ import {
 } from '@/components/ui/sheet'
 
 const TYPE_LABEL: Record<Transaction['type'], string> = {
-  inflow: 'Inflow',
-  outflow: 'Outflow',
+  inflow: 'Money in',
+  outflow: 'Money out',
 }
 
 type FlowFilter = 'All' | 'Income' | 'Expenses'
