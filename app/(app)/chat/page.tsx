@@ -1,7 +1,5 @@
 'use client'
 
-'use client'
-
 import { useState, useRef, useEffect } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
@@ -47,7 +45,7 @@ ${recentTxs}`
 
 const SUGGESTED = [
   'Which account has the most money?',
-  'Where is most of my money?',
+  'Am I spending more than I earn?',
   'What were my biggest expenses recently?',
 ]
 

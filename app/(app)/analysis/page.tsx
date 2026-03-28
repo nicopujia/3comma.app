@@ -41,15 +41,20 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   return (
     <div className="rounded-xl bg-foreground px-3 py-2 shadow-lg">
       <p className="tabular-nums text-xs font-semibold text-background">
-        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(payload[0].value)}
+        {new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          maximumFractionDigits: 0,
+        }).format(payload[0].value)}
       </p>
     </div>
   )
 }
 
-// Renders text character-by-character without layout reflow.
-// The full text is kept invisible in the DOM to lock the container size,
-// while the revealed portion is overlaid absolutely.
+// TypewriterText: reveals text character-by-character.
+// The invisible ghost span locks the container height from the start,
+// preventing layout reflow while the overlay animates.
+// Uses only <span> elements so it is valid inside any parent.
 function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) {
   const [count, setCount] = useState(0)
   const [done, setDone] = useState(false)
@@ -73,7 +78,9 @@ function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) 
 
   return (
     <span className="relative block">
+      {/* invisible full text holds the correct container height */}
       <span aria-hidden className="invisible select-none">{text}</span>
+      {/* revealed text overlaid — does not affect layout */}
       <span className="absolute inset-0">
         {text.slice(0, count)}
         {!done && (
@@ -89,8 +96,12 @@ export default function AnalysisPage() {
   const accounts = useAppStore((s) => s.accounts)
   const totalLiquidityUSD = useAppStore((s) => s.totalLiquidityUSD)
   const total = totalLiquidityUSD()
+  const txCount = useAppStore((s) => s.transactions.length)
 
-  const historicalData = useMemo(() => getHistoricalData(accounts, range), [accounts, range])
+  const historicalData = useMemo(
+    () => getHistoricalData(accounts, range),
+    [accounts, range]
+  )
 
   const chartData = useMemo(() => {
     const maxPoints = 60
@@ -110,12 +121,10 @@ export default function AnalysisPage() {
   const aiText = useMemo(() => getAIExplanation(range, total), [range, total])
 
   const xTicks = useMemo(() => {
-    const count = range === '1W' ? 7 : range === '1M' ? 5 : 4
-    const step = Math.max(1, Math.floor(chartData.length / count))
+    const tickCount = range === '1W' ? 7 : range === '1M' ? 5 : 4
+    const step = Math.max(1, Math.floor(chartData.length / tickCount))
     return chartData.filter((_, i) => i % step === 0).map((d) => d.label)
   }, [chartData, range])
-
-  const txCount = useAppStore((s) => s.transactions.length)
 
   return (
     <div className="flex flex-col pb-24 pt-12">
@@ -195,15 +204,15 @@ export default function AnalysisPage() {
         </div>
       </Link>
 
-      {/* Analysis text */}
+      {/* Analysis */}
       <div className="mx-6 h-px bg-border" />
       <div className="flex flex-col gap-3 px-6 pb-4 pt-5">
         <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
           Analysis
         </span>
-        <div className="text-pretty text-sm leading-relaxed text-foreground">
+        <span className="text-pretty text-sm leading-relaxed text-foreground">
           <TypewriterText text={aiText} speed={10} />
-        </div>
+        </span>
       </div>
     </div>
   )
