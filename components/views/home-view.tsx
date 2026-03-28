@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+
 import NumberFlow from '@number-flow/react'
 import { Eye, EyeOff, ExternalLink } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
@@ -46,37 +46,9 @@ function formatLastUpdated(): string {
 export function HomeView() {
   const accounts = useAppStore((s) => s.accounts)
   const toggleIncluded = useAppStore((s) => s.toggleIncluded)
-  const updateBalance = useAppStore((s) => s.updateBalance)
   const totalLiquidityUSD = useAppStore((s) => s.totalLiquidityUSD)
-  const tick = useAppStore((s) => s.tick)
 
   const total = totalLiquidityUSD()
-
-  // Live balance simulation
-  const simulateTick = useCallback(() => {
-    accounts.forEach((account) => {
-      let delta = 0
-      if (account.type === 'crypto') {
-        // crypto fluctuates ±1.5%
-        delta = account.balance * (Math.random() - 0.5) * 0.03
-      } else if (account.type === 'investment') {
-        // IBKR mild ±0.3%
-        delta = account.balance * (Math.random() - 0.5) * 0.006
-      } else if (account.type === 'bank') {
-        // banks rarely change
-        if (Math.random() < 0.05) {
-          delta = account.balance * (Math.random() - 0.5) * 0.001
-        }
-      }
-      if (Math.abs(delta) > 0.01) {
-        updateBalance(account.id, delta)
-      }
-    })
-  }, [accounts, updateBalance])
-
-  useEffect(() => {
-    simulateTick()
-  }, [tick, simulateTick])
 
   const handleAccountTap = (account: (typeof accounts)[0]) => {
     if (account.deepLink) {
@@ -138,11 +110,14 @@ export function HomeView() {
               : 0
 
             return (
-              <button
+              <div
                 key={account.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => handleAccountTap(account)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAccountTap(account)}
                 className={cn(
-                  'flex items-center gap-4 px-6 py-4 text-left transition-colors active:bg-muted',
+                  'flex cursor-pointer items-center gap-4 px-6 py-4 text-left transition-colors active:bg-muted',
                   i !== accounts.length - 1 && 'border-b border-border'
                 )}
               >
@@ -198,7 +173,7 @@ export function HomeView() {
                     )}
                   </button>
                 </div>
-              </button>
+              </div>
             )
           })}
         </div>
