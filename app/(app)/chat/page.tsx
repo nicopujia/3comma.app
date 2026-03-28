@@ -49,8 +49,8 @@ const SUGGESTED = [
 ]
 
 // Nav bar height + safe area — matches the fixed nav in layout.tsx
-// The nav has py-3 + icon (20px) + label (10px) + gap-1 ≈ 56px, plus safe-bottom
-const NAV_HEIGHT = 'calc(3.5rem + env(safe-area-inset-bottom))'
+// py-3 (12px × 2) + icon 20px + gap-1 (4px) + label 10px = 58px ≈ 3.625rem
+const NAV_HEIGHT = 'calc(3.625rem + env(safe-area-inset-bottom))'
 
 export default function ChatPage() {
   const accounts = useAppStore((s) => s.accounts)
@@ -98,7 +98,7 @@ export default function ChatPage() {
   return (
     // Fixed overlay that sits between the top and the nav bar
     <div
-      className="fixed inset-x-0 top-0 flex flex-col bg-background"
+      className="fixed inset-x-0 top-0 z-40 flex flex-col bg-background"
       style={{ bottom: NAV_HEIGHT }}
     >
       {/* Scrollable messages */}
