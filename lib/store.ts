@@ -83,7 +83,22 @@ export const useAppStore = create<AppStore>()(
 
       setActiveView: (v: number) => set({ activeView: v }),
 
-      incrementTick: () => set((s) => ({ tick: s.tick + 1 })),
+      incrementTick: () =>
+        set((state) => {
+          const updated = state.accounts.map((a) => {
+            let delta = 0
+            if (a.type === 'crypto') {
+              delta = a.balance * (Math.random() - 0.5) * 0.03
+            } else if (a.type === 'investment') {
+              delta = a.balance * (Math.random() - 0.5) * 0.006
+            } else if (a.type === 'bank' && Math.random() < 0.05) {
+              delta = a.balance * (Math.random() - 0.5) * 0.001
+            }
+            if (Math.abs(delta) < 0.01) return a
+            return { ...a, balance: Math.max(0, a.balance + delta) }
+          })
+          return { tick: state.tick + 1, accounts: updated }
+        }),
     }),
     {
       name: '3comma-store',
