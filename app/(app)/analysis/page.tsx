@@ -47,17 +47,32 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   )
 }
 
-// Typewriter component that streams text character by character.
-// The full text is rendered invisibly first so the container height is locked,
-// preventing reflow/jumping as characters are revealed.
+// Typewriter component — reveals text char by char with no layout reflow.
+// Uses a block container sized to the full text from the start.
 function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) {
   const [count, setCount] = useState(0)
   const [done, setDone] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
+  // Lock container height to full-text height before animation starts
   useEffect(() => {
     setCount(0)
     setDone(false)
     if (!text) return
+
+    // Measure full height synchronously before first char reveals
+    const el = containerRef.current
+    if (el) {
+      el.style.minHeight = ''
+      // Force a paint with full invisible text to measure
+      const ghost = document.createElement('div')
+      ghost.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;width:' + el.offsetWidth + 'px;font:' + getComputedStyle(el).font + ';line-height:' + getComputedStyle(el).lineHeight
+      ghost.textContent = text
+      document.body.appendChild(ghost)
+      el.style.minHeight = ghost.offsetHeight + 'px'
+      document.body.removeChild(ghost)
+    }
+
     let i = 0
     const id = setInterval(() => {
       i++
@@ -72,15 +87,10 @@ function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) 
   }, [text])
 
   return (
-    <span className="relative">
-      {/* Ghost: full text, invisible — locks the container height */}
-      <span aria-hidden className="invisible">{text}</span>
-      {/* Revealed text overlaid absolutely */}
-      <span className="absolute inset-0">
-        {text.slice(0, count)}
-        {!done && <span className="ml-px inline-block h-3.5 w-0.5 animate-pulse bg-foreground/60 align-middle" />}
-      </span>
-    </span>
+    <div ref={containerRef}>
+      {text.slice(0, count)}
+      {!done && <span className="ml-px inline-block h-3.5 w-0.5 animate-pulse bg-foreground/60 align-middle" />}
+    </div>
   )
 }
 

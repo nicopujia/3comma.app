@@ -102,9 +102,9 @@ export default function ChatPage() {
       style={{ bottom: NAV_HEIGHT }}
     >
       {/* Scrollable messages */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex flex-1 flex-col overflow-y-auto">
         {isEmpty ? (
-          <div className="flex h-full flex-col justify-end gap-2 px-4 py-4">
+          <div className="flex flex-1 flex-col justify-end gap-2 px-4 py-4">
             <p className="pb-2 text-center text-sm text-muted-foreground">
               Your personal finance assistant is ready.
             </p>
