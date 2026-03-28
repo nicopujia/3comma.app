@@ -19,7 +19,7 @@ All your money, one number. A personal finance dashboard that aggregates multipl
 - **Framework:** Next.js 16 (App Router) + React 19 + TypeScript
 - **State:** Zustand with localStorage persistence
 - **Styling:** Tailwind CSS 4 + shadcn/ui (New York theme)
-- **Charts:** Recharts
+- **Charts:** Recharts + JSON Render
 - **AI Chat:** Vercel AI SDK + OpenAI GPT-4o-mini
 - **Animations:** @number-flow/react for animated numbers
 

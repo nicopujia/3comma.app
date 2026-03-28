@@ -223,8 +223,8 @@ export default function AnalysisPage() {
   const activeChart = savedCharts.find((c) => c.id === activeTab)
 
   const historicalData = useMemo(
-    () => getHistoricalData(accounts, range),
-    [accounts, range]
+    () => getHistoricalData(accounts, range, transactions),
+    [accounts, range, transactions]
   )
 
   const chartData = useMemo(() => {
