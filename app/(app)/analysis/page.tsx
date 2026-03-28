@@ -48,16 +48,14 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 }
 
 // Typewriter component that streams text character by character
-function TypewriterText({ text, speed = 12 }: { text: string; speed?: number }) {
+function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) {
   const [displayed, setDisplayed] = useState('')
   const [done, setDone] = useState(false)
-  const prevText = useRef('')
 
   useEffect(() => {
-    if (text === prevText.current) return
-    prevText.current = text
     setDisplayed('')
     setDone(false)
+    if (!text) return
     let i = 0
     const id = setInterval(() => {
       i++
@@ -68,7 +66,8 @@ function TypewriterText({ text, speed = 12 }: { text: string; speed?: number }) 
       }
     }, speed)
     return () => clearInterval(id)
-  }, [text, speed])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text])
 
   return (
     <span>

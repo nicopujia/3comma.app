@@ -164,12 +164,12 @@ export function getAIExplanation(range: string, total: number): string {
     }).format(n)
 
   const explanations: Record<string, string> = {
-    '1W': `Your deployable liquidity held steady around ${fmt(total)} this week, with minor fluctuations driven by Binance's crypto exposure and a slight ARS/USD drift. Bank balances (Wallbit, Wise) were stable, while GrabrFi received a small inbound transfer mid-week.`,
-    '1M': `Over the past month, total liquidity dipped ~6% before recovering. The main driver was a Binance drawdown during a volatile crypto stretch, offset by a USD deposit into Wallbit. Brubank's ARS balance lost marginal USD value due to FX slippage.`,
-    '3M': `The last 90 days show a moderate uptrend from a lower base. Your USD-denominated accounts (Wallbit, Wise, GrabrFi) are responsible for most of the stability. Binance added volatility in both directions, netting roughly flat. ARS accounts contributed less as the FX rate shifted.`,
-    '6M': `Over 6 months, liquidity grew by an estimated 12%, largely from steady income into bank accounts and a Binance rally in Q4. Two notable outflows — likely payments or transfers — created temporary dips in February and April. Concentration in USD accounts helped cushion FX effects.`,
-    '1Y': `The past year paints a clear picture: slow accumulation through bank deposits punctuated by crypto swings. Your highest liquidity moment came in late Q3. The FX impact of ARS-denominated holdings (Brubank) eroded roughly 8% in USD terms. Overall trajectory is positive.`,
-    ALL: `Across the full tracked history, your liquidity has grown substantially. Early periods show lower balances across fewer accounts. Crypto exposure (Binance) introduced meaningful volatility but contributed to net gains. Bank diversification across Wallbit, Wise, and GrabrFi has been the cornerstone of stability.`,
+    '1W': `Your total stayed close to ${fmt(total)} this week. Crypto prices caused small ups and downs, while your bank accounts stayed flat. A small payment came in to GrabrFi mid-week.`,
+    '1M': `Your balance dipped about 6% this month before bouncing back. The main reason was a drop in crypto value, but a payment into Wallbit helped offset it. Your Argentine peso account lost a little value against the dollar.`,
+    '3M': `The last 3 months show a slow upward trend. Your dollar accounts (Wallbit, Wise, GrabrFi) kept things steady. Crypto went up and down but ended roughly where it started.`,
+    '6M': `Over 6 months, your total grew about 12%, mostly from regular income into your bank accounts and crypto gains. Two bigger payments caused brief dips, but things recovered quickly.`,
+    '1Y': `The past year shows steady growth from regular deposits, with some bumps from crypto price swings. Your best point was around late summer. Overall, you finished the year in better shape than you started.`,
+    ALL: `Looking at the full history, your total has grown a lot. Early on, you had fewer accounts and smaller balances. Crypto added some volatility but also contributed to growth. Your bank accounts have been the most stable part of the picture.`,
   }
 
   return explanations[range] ?? explanations['1M']

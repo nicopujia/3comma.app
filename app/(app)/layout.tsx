@@ -33,7 +33,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background font-sans">
-      <main className="flex-1 overflow-y-auto pb-24">
+      <main key={pathname} className="flex-1 overflow-y-auto pb-24 animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
         {children}
       </main>
 

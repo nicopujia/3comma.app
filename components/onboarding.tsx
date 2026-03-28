@@ -80,7 +80,7 @@ export function Onboarding() {
                 All your money, one number.
               </h1>
               <p className="text-base leading-relaxed text-muted-foreground text-pretty">
-                See exactly how much liquidity you can deploy — across every account, in real time.
+                See exactly how much you have across every account, at a glance.
               </p>
             </div>
             <button
@@ -222,7 +222,7 @@ export function Onboarding() {
                     You&apos;re all set
                   </h2>
                   <p className="text-balance text-sm text-muted-foreground">
-                    {selected.size} account{selected.size !== 1 ? 's' : ''} selected. Open the app anytime to see your liquidity.
+                    {selected.size} account{selected.size !== 1 ? 's' : ''} connected. You can update this anytime.
                   </p>
                 </div>
                 <button

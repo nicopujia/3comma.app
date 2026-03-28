@@ -219,7 +219,7 @@ export default function HomePage() {
         </button>
 
         {accountsOpen && (
-          <div className="flex flex-col">
+          <div className="flex flex-col animate-in slide-in-from-top-2 fade-in-0 duration-200">
             {accounts.map((account, i) => {
               const usdValue = toUSD(account.balance, account.currency)
               const percent =

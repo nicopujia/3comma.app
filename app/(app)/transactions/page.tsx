@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { ArrowLeft, Search, X, SlidersHorizontal } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { Transaction, toUSD } from '@/lib/mock-data'
@@ -29,8 +29,6 @@ const TYPE_LABEL: Record<Transaction['type'], string> = {
   inflow: 'Money in',
   outflow: 'Money out',
 }
-
-type FlowFilter = 'All' | 'Income' | 'Expenses'
 
 function formatAmount(amount: number, currency: string): string {
   const abs = Math.abs(amount)
@@ -87,12 +85,11 @@ function EditCashTxDialog({ tx, onClose }: { tx: Transaction | null; onClose: ()
 }
 
 export default function TransactionsPage() {
-  const router = useRouter()
   const accounts = useAppStore((s) => s.accounts)
   const transactions = useAppStore((s) => s.transactions)
 
   const [search, setSearch] = useState('')
-  const [flowFilter, setFlowFilter] = useState<FlowFilter>('All')
+  const [flowFilter] = useState<FlowFilter>('All')
   const [selectedTypes, setSelectedTypes] = useState<Set<Transaction['type']>>(new Set())
   const [selectedAccountIds, setSelectedAccountIds] = useState<Set<string>>(new Set())
   const [minAmount, setMinAmount] = useState('')
@@ -158,20 +155,19 @@ export default function TransactionsPage() {
     setSelectedAccountIds(new Set())
     setMinAmount('')
     setMaxAmount('')
-    setFlowFilter('All')
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background">
+    <div className="flex min-h-dvh flex-col bg-background animate-in slide-in-from-right-4 duration-200">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border px-4 pt-12 pb-3">
-        <button
-          onClick={() => router.back()}
+        <Link
+          href="/analysis"
           className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-muted"
           aria-label="Go back"
         >
           <ArrowLeft className="h-5 w-5 text-foreground" />
-        </button>
+        </Link>
         <span className="text-base font-semibold text-foreground">Transactions</span>
         <div className="ml-auto flex items-center gap-2">
           <button
@@ -213,24 +209,6 @@ export default function TransactionsPage() {
             </button>
           )}
         </div>
-      </div>
-
-      {/* Flow filter pills */}
-      <div className="flex items-center gap-1.5 border-b border-border px-4 py-3 no-scrollbar overflow-x-auto">
-        {(['All', 'Income', 'Expenses'] as FlowFilter[]).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFlowFilter(f)}
-            className={cn(
-              'shrink-0 cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all',
-              flowFilter === f
-                ? 'bg-foreground text-background'
-                : 'bg-muted text-muted-foreground hover:bg-muted/60'
-            )}
-          >
-            {f}
-          </button>
-        ))}
       </div>
 
       {/* Results count */}

@@ -33,7 +33,7 @@ function buildContext(
     })
     .join('\n')
 
-  return `Total deployable liquidity: $${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+  return `Total balance: $${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
 
 Accounts (${accounts.length}):
 ${accountLines}
@@ -43,7 +43,7 @@ ${recentTxs}`
 }
 
 const SUGGESTED = [
-  'How much can I deploy right now?',
+  'How much money do I have in total?',
   'Where is most of my money?',
   'What were my biggest expenses recently?',
 ]
@@ -88,33 +88,29 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="flex h-dvh flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-border bg-background/90 px-6 py-5 backdrop-blur-xl">
+      <div className="shrink-0 border-b border-border px-6 py-5 pt-14">
         <h1 className="text-base font-semibold">Finance Assistant</h1>
         <p className="text-xs text-muted-foreground">Ask anything about your money</p>
       </div>
 
-      {/* Messages */}
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-6 pb-36">
+      {/* Messages — only scrollable when there are messages */}
+      <div className={cn('flex flex-col gap-4 px-4', messages.length === 0 ? 'flex-1 justify-end pb-4' : 'flex-1 overflow-y-auto py-6')}>
         {messages.length === 0 && (
-          <div className="flex flex-col gap-6 pt-8">
-            <p className="text-center text-sm text-muted-foreground">
+          <div className="flex flex-col gap-2">
+            <p className="pb-2 text-center text-sm text-muted-foreground">
               Your personal finance assistant is ready.
             </p>
-            <div className="flex flex-col gap-2">
-              {SUGGESTED.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => {
-                    sendMessage({ text: s })
-                  }}
-                  className="cursor-pointer rounded-2xl border border-border bg-card px-4 py-3 text-left text-sm text-foreground transition-colors hover:bg-muted active:bg-muted"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            {SUGGESTED.map((s) => (
+              <button
+                key={s}
+                onClick={() => sendMessage({ text: s })}
+                className="cursor-pointer rounded-2xl border border-border bg-card px-4 py-3 text-left text-sm text-foreground transition-colors hover:bg-muted active:bg-muted"
+              >
+                {s}
+              </button>
+            ))}
           </div>
         )}
 
@@ -164,8 +160,8 @@ export default function ChatPage() {
       </div>
 
       {/* Input */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-border bg-background/90 safe-bottom backdrop-blur-xl">
-        <div className="flex items-end gap-2 px-4 py-3 pb-20">
+      <div className="shrink-0 border-t border-border bg-background/90 backdrop-blur-xl safe-bottom">
+        <div className="flex items-end gap-2 px-4 py-3 pb-24">
           <textarea
             ref={inputRef}
             value={input}
