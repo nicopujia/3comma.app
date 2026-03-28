@@ -47,26 +47,28 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   )
 }
 
-// Typewriter component — reveals text char by char with no layout reflow.
-// Uses a block container sized to the full text from the start.
+// Typewriter that locks container height before animating to prevent reflow
 function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) {
   const [count, setCount] = useState(0)
   const [done, setDone] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Lock container height to full-text height before animation starts
   useEffect(() => {
     setCount(0)
     setDone(false)
     if (!text) return
 
-    // Measure full height synchronously before first char reveals
     const el = containerRef.current
     if (el) {
       el.style.minHeight = ''
-      // Force a paint with full invisible text to measure
       const ghost = document.createElement('div')
-      ghost.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;width:' + el.offsetWidth + 'px;font:' + getComputedStyle(el).font + ';line-height:' + getComputedStyle(el).lineHeight
+      ghost.style.cssText =
+        'position:absolute;visibility:hidden;pointer-events:none;width:' +
+        el.offsetWidth +
+        'px;font:' +
+        getComputedStyle(el).font +
+        ';line-height:' +
+        getComputedStyle(el).lineHeight
       ghost.textContent = text
       document.body.appendChild(ghost)
       el.style.minHeight = ghost.offsetHeight + 'px'
@@ -83,13 +85,15 @@ function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) 
       }
     }, speed)
     return () => clearInterval(id)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text])
 
   return (
     <div ref={containerRef}>
       {text.slice(0, count)}
-      {!done && <span className="ml-px inline-block h-3.5 w-0.5 animate-pulse bg-foreground/60 align-middle" />}
+      {!done && (
+        <span className="ml-px inline-block h-3.5 w-0.5 animate-pulse bg-foreground/60 align-middle" />
+      )}
     </div>
   )
 }
@@ -151,7 +155,12 @@ export default function AnalysisPage() {
       <div className="px-2">
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="0" stroke="var(--border)" strokeOpacity={0.5} vertical={false} />
+            <CartesianGrid
+              strokeDasharray="0"
+              stroke="var(--border)"
+              strokeOpacity={0.5}
+              vertical={false}
+            />
             <XAxis
               dataKey="label"
               ticks={xTicks}
@@ -169,7 +178,10 @@ export default function AnalysisPage() {
               width={46}
               tickCount={4}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--border)', strokeWidth: 1 }} />
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ stroke: 'var(--border)', strokeWidth: 1 }}
+            />
             <Line
               type="monotone"
               dataKey="value"
@@ -199,8 +211,10 @@ export default function AnalysisPage() {
 
       {/* Analysis text */}
       <div className="mx-6 h-px bg-border" />
-      <div className="flex flex-col gap-3 px-6 pt-5 pb-4">
-        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Analysis</p>
+      <div className="flex flex-col gap-3 px-6 pb-4 pt-5">
+        <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+          Analysis
+        </span>
         <div className="text-pretty text-sm leading-relaxed text-foreground">
           <TypewriterText text={aiText} speed={10} />
         </div>
