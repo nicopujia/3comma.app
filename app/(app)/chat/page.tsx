@@ -161,7 +161,7 @@ export default function ChatPage() {
 
       {/* Input */}
       <div className="shrink-0 border-t border-border bg-background/90 backdrop-blur-xl safe-bottom">
-        <div className="flex items-end gap-2 px-4 py-3 pb-24">
+        <div className="flex items-end gap-2 px-4 py-3">
           <textarea
             ref={inputRef}
             value={input}
