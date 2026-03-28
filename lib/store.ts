@@ -144,14 +144,17 @@ export const useAppStore = create<AppStore>()(
         transactions: state.transactions,
       }),
       // JSON.parse turns Date objects into strings — revive them on load
+      // Also migrate old transaction types to inflow/outflow
       merge: (persisted, current) => {
         const p = persisted as PersistedState
+        const INFLOW_TYPES = new Set(['deposit', 'sell', 'inflow'])
         return {
           ...current,
           ...p,
           transactions: (p.transactions ?? []).map((tx) => ({
             ...tx,
             timestamp: new Date(tx.timestamp),
+            type: INFLOW_TYPES.has(tx.type) ? 'inflow' : 'outflow',
           })),
         }
       },
