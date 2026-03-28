@@ -4,6 +4,11 @@ import {
   UIMessage,
 } from 'ai'
 import { groq } from '@ai-sdk/groq'
+import { openai } from '@ai-sdk/openai'
+
+const model = process.env.NODE_ENV === 'production'
+  ? openai('gpt-4o-mini')
+  : groq('llama-3.3-70b-versatile')
 
 export const maxDuration = 30
 
@@ -12,7 +17,7 @@ export async function POST(req: Request) {
     await req.json()
 
   const result = streamText({
-    model: groq('llama-3.3-70b-versatile'),
+    model,
     system: `You are a personal finance assistant for the user of 3comma, a money tracking app.
 You have access to the user's real financial data summarized below. Treat it as their actual finances.
 Be concise, friendly, and helpful. Use simple everyday language — avoid jargon like "liquidity", "deploy", or "denominated".
