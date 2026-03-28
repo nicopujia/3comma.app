@@ -110,54 +110,64 @@ export function toUSD(balance: number, currency: Currency): number {
   return balance / FX_ARS_USD
 }
 
-// Generate historical data for an account subset
-// Uses a seed derived from each date so the same day always produces the same value
-export function generateHistoricalData(
+// Build historical balance data from actual transactions.
+// Starts from current balances and walks backwards, subtracting each transaction's
+// effect to reconstruct what the total was on each day.
+export function getHistoricalData(
   accounts: Account[],
-  days: number
+  range: string,
+  transactions: Transaction[]
 ): HistoricalPoint[] {
-  const now = new Date()
-  const points: HistoricalPoint[] = []
+  const RANGE_DAYS: Record<string, number> = {
+    '1W': 7,
+    '1M': 30,
+    '3M': 90,
+    '6M': 180,
+    '1Y': 365,
+    ALL: 730,
+  }
 
-  const baseTotal = accounts
+  const days = RANGE_DAYS[range] ?? 30
+  const now = new Date()
+  const includedIds = new Set(accounts.filter((a) => a.included).map((a) => a.id))
+
+  // Current total in USD
+  const currentTotal = accounts
     .filter((a) => a.included)
     .reduce((sum, a) => sum + toUSD(a.balance, a.currency), 0)
 
-  for (let i = days; i >= 0; i--) {
+  // Filter transactions to included accounts, sorted newest first
+  const relevantTxs = transactions
+    .filter((tx) => includedIds.has(tx.accountId))
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+
+  // Build daily balances walking backwards from today
+  const points: HistoricalPoint[] = []
+  let runningTotal = currentTotal
+  let txIndex = 0
+
+  for (let i = 0; i <= days; i++) {
     const date = new Date(now)
     date.setDate(date.getDate() - i)
+    date.setHours(23, 59, 59, 999)
 
-    // Seed from the calendar date so the value is stable across range switches
-    const dateSeed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
-    const rand = seededRandom(dateSeed)
+    // Subtract transactions that happened on this day (reverse their effect)
+    while (txIndex < relevantTxs.length) {
+      const tx = relevantTxs[txIndex]
+      if (tx.timestamp > date) {
+        // This transaction is after this date — reverse it
+        runningTotal -= toUSD(tx.amount, tx.currency)
+        txIndex++
+      } else {
+        break
+      }
+    }
 
-    // Trend based on absolute days ago so the same date has the same trend in any range
-    const trend = 1 - (i / 730) * 0.08
-    const noise = (rand() - 0.5) * 0.04
-    const cryptoSwing = Math.sin(i * 0.3) * 0.02
-    const value = baseTotal * (trend + noise + cryptoSwing)
-
-    points.push({ date, value: Math.max(0, value) })
+    points.push({ date, value: Math.max(0, runningTotal) })
   }
 
-  return points
-}
-
-const RANGE_DAYS: Record<string, number> = {
-  '1W': 7,
-  '1M': 30,
-  '3M': 90,
-  '6M': 180,
-  '1Y': 365,
-  ALL: 730,
-}
-
-export function getHistoricalData(
-  accounts: Account[],
-  range: string
-): HistoricalPoint[] {
-  const days = RANGE_DAYS[range] ?? 30
-  return generateHistoricalData(accounts, days)
+  // Return in chronological order (oldest first)
+  return points.reverse()
 }
 
 export function getAIExplanation(range: string, total: number): string {

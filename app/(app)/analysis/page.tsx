@@ -154,8 +154,8 @@ export default function AnalysisPage() {
   const rangeStart = useMemo(() => getRangeStart(range), [range])
 
   const historicalData = useMemo(
-    () => getHistoricalData(accounts, range),
-    [accounts, range]
+    () => getHistoricalData(accounts, range, transactions),
+    [accounts, range, transactions]
   )
 
   const chartData = useMemo(() => {
