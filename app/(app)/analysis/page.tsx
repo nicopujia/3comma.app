@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   ResponsiveContainer,
   LineChart,
@@ -47,34 +47,17 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   )
 }
 
-// Typewriter that locks container height before animating to prevent reflow
+// Renders text character-by-character without layout reflow.
+// The full text is kept invisible in the DOM to lock the container size,
+// while the revealed portion is overlaid absolutely.
 function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) {
   const [count, setCount] = useState(0)
   const [done, setDone] = useState(false)
-  const containerRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
     setCount(0)
     setDone(false)
     if (!text) return
-
-    const el = containerRef.current
-    if (el) {
-      el.style.minHeight = ''
-      const ghost = document.createElement('div')
-      ghost.style.cssText =
-        'position:absolute;visibility:hidden;pointer-events:none;width:' +
-        el.offsetWidth +
-        'px;font:' +
-        getComputedStyle(el).font +
-        ';line-height:' +
-        getComputedStyle(el).lineHeight
-      ghost.textContent = text
-      document.body.appendChild(ghost)
-      el.style.minHeight = ghost.offsetHeight + 'px'
-      document.body.removeChild(ghost)
-    }
-
     let i = 0
     const id = setInterval(() => {
       i++
@@ -89,9 +72,14 @@ function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) 
   }, [text])
 
   return (
-    <span ref={containerRef} className="block">
-      {text.slice(0, count)}
-      {!done && <span className="ml-px inline-block h-3.5 w-0.5 animate-pulse bg-foreground/60 align-middle" />}
+    <span className="relative block">
+      <span aria-hidden className="invisible select-none">{text}</span>
+      <span className="absolute inset-0">
+        {text.slice(0, count)}
+        {!done && (
+          <span className="ml-px inline-block h-3.5 w-0.5 animate-pulse bg-foreground/60 align-middle" />
+        )}
+      </span>
     </span>
   )
 }
