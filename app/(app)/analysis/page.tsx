@@ -201,9 +201,9 @@ export default function AnalysisPage() {
       <div className="mx-6 h-px bg-border" />
       <div className="flex flex-col gap-3 px-6 pt-5 pb-4">
         <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Analysis</p>
-        <p className="text-pretty text-sm leading-relaxed text-foreground">
+        <div className="text-pretty text-sm leading-relaxed text-foreground">
           <TypewriterText text={aiText} speed={10} />
-        </p>
+        </div>
       </div>
     </div>
   )
