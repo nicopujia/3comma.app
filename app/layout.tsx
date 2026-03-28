@@ -11,11 +11,11 @@ const geist = Geist({
 
 export const metadata: Metadata = {
   title: '3comma',
-  description: 'Know exactly how much you can deploy right now.',
+  description: 'All your money, one number.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: '3comma',
   },
 }

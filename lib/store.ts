@@ -14,6 +14,7 @@ interface PersistedState {
   onboardingComplete: boolean
   selectedAccountIds: string[]
   accounts: Account[]
+  transactions: Transaction[]
 }
 
 interface AppStore extends PersistedState {
@@ -21,13 +22,10 @@ interface AppStore extends PersistedState {
   resetOnboarding: () => void
   toggleIncluded: (id: string) => void
   updateBalance: (id: string, delta: number) => void
+  setCashBalance: (amount: number) => void
+  addCashTransaction: (description: string, amount: number) => void
   totalLiquidityUSD: () => number
   activeAccounts: () => Account[]
-  transactions: Transaction[]
-  activeView: number
-  setActiveView: (v: number) => void
-  tick: number
-  incrementTick: () => void
 }
 
 export const useAppStore = create<AppStore>()(
@@ -37,8 +35,6 @@ export const useAppStore = create<AppStore>()(
       selectedAccountIds: ALL_ACCOUNTS.map((a) => a.id),
       accounts: [],
       transactions: [],
-      activeView: 0,
-      tick: 0,
 
       completeOnboarding: (selectedIds: string[]) => {
         const accounts = ALL_ACCOUNTS.filter((a) => selectedIds.includes(a.id))
@@ -72,6 +68,38 @@ export const useAppStore = create<AppStore>()(
           ),
         })),
 
+      setCashBalance: (amount: number) =>
+        set((state) => ({
+          accounts: state.accounts.map((a) =>
+            a.id === 'manual-cash' ? { ...a, balance: Math.max(0, amount) } : a
+          ),
+        })),
+
+      addCashTransaction: (description: string, amount: number) => {
+        set((state) => {
+          const newTx: Transaction = {
+            id: `manual-cash-${Date.now()}`,
+            accountId: 'manual-cash',
+            accountName: 'Manual Cash',
+            description: description || (amount > 0 ? 'Cash received' : 'Cash spent'),
+            amount,
+            currency: 'USD',
+            type: amount > 0 ? 'deposit' : 'payment',
+            timestamp: new Date(),
+          }
+          const cashAccount = state.accounts.find((a) => a.id === 'manual-cash')
+          const updatedAccounts = state.accounts.map((a) =>
+            a.id === 'manual-cash'
+              ? { ...a, balance: Math.max(0, a.balance + amount) }
+              : a
+          )
+          return {
+            accounts: cashAccount ? updatedAccounts : state.accounts,
+            transactions: [newTx, ...state.transactions],
+          }
+        })
+      },
+
       totalLiquidityUSD: () => {
         const { accounts } = get()
         return accounts
@@ -80,25 +108,6 @@ export const useAppStore = create<AppStore>()(
       },
 
       activeAccounts: () => get().accounts,
-
-      setActiveView: (v: number) => set({ activeView: v }),
-
-      incrementTick: () =>
-        set((state) => {
-          const updated = state.accounts.map((a) => {
-            let delta = 0
-            if (a.type === 'crypto') {
-              delta = a.balance * (Math.random() - 0.5) * 0.03
-            } else if (a.type === 'investment') {
-              delta = a.balance * (Math.random() - 0.5) * 0.006
-            } else if (a.type === 'bank' && Math.random() < 0.05) {
-              delta = a.balance * (Math.random() - 0.5) * 0.001
-            }
-            if (Math.abs(delta) < 0.01) return a
-            return { ...a, balance: Math.max(0, a.balance + delta) }
-          })
-          return { tick: state.tick + 1, accounts: updated }
-        }),
     }),
     {
       name: '3comma-store',
@@ -106,6 +115,7 @@ export const useAppStore = create<AppStore>()(
         onboardingComplete: state.onboardingComplete,
         selectedAccountIds: state.selectedAccountIds,
         accounts: state.accounts,
+        transactions: state.transactions,
       }),
     }
   )

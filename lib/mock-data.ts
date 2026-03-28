@@ -118,7 +118,6 @@ export function generateHistoricalData(
   const now = new Date()
   const points: HistoricalPoint[] = []
 
-  // Base total from included accounts
   const baseTotal = accounts
     .filter((a) => a.included)
     .reduce((sum, a) => sum + toUSD(a.balance, a.currency), 0)
@@ -127,9 +126,8 @@ export function generateHistoricalData(
     const date = new Date(now)
     date.setDate(date.getDate() - i)
 
-    // Simulate organic growth with noise
     const progress = (days - i) / days
-    const trend = 1 - progress * 0.08 // slight downward from current (going back in time)
+    const trend = 1 - progress * 0.08
     const noise = (Math.random() - 0.5) * 0.04
     const cryptoSwing = Math.sin(i * 0.3) * 0.02
     const value = baseTotal * (trend + noise + cryptoSwing)
@@ -157,7 +155,6 @@ export function getHistoricalData(
   return generateHistoricalData(accounts, days)
 }
 
-// AI-style explanations per range
 export function getAIExplanation(range: string, total: number): string {
   const fmt = (n: number) =>
     new Intl.NumberFormat('en-US', {
@@ -178,27 +175,84 @@ export function getAIExplanation(range: string, total: number): string {
   return explanations[range] ?? explanations['1M']
 }
 
-// Generate mock transactions
+// Each account only generates transactions that make sense for its type
+interface AccountTxTemplate {
+  description: string
+  type: Transaction['type']
+  sign: 1 | -1
+}
+
+const ACCOUNT_TX_TEMPLATES: Record<string, AccountTxTemplate[]> = {
+  wallbit: [
+    { description: 'Salary deposit', type: 'deposit', sign: 1 },
+    { description: 'Wire transfer received', type: 'deposit', sign: 1 },
+    { description: 'Freelance payment', type: 'deposit', sign: 1 },
+    { description: 'Account fee', type: 'fee', sign: -1 },
+    { description: 'Transfer to Wise', type: 'transfer', sign: -1 },
+    { description: 'Netflix subscription', type: 'payment', sign: -1 },
+    { description: 'Transfer to GrabrFi', type: 'transfer', sign: -1 },
+    { description: 'Freelance invoice', type: 'deposit', sign: 1 },
+  ],
+  grabrfi: [
+    { description: 'Client payment received', type: 'deposit', sign: 1 },
+    { description: 'Transfer to Wise', type: 'transfer', sign: -1 },
+    { description: 'Monthly subscription', type: 'payment', sign: -1 },
+    { description: 'Inbound wire', type: 'deposit', sign: 1 },
+    { description: 'SaaS tool payment', type: 'payment', sign: -1 },
+    { description: 'Consulting fee received', type: 'deposit', sign: 1 },
+  ],
+  wise: [
+    { description: 'International transfer received', type: 'deposit', sign: 1 },
+    { description: 'Currency conversion fee', type: 'fee', sign: -1 },
+    { description: 'Invoice received', type: 'deposit', sign: 1 },
+    { description: 'Transfer to Brubank', type: 'transfer', sign: -1 },
+    { description: 'Contractor payment', type: 'payment', sign: -1 },
+    { description: 'Hosting payment', type: 'payment', sign: -1 },
+  ],
+  brubank: [
+    { description: 'Grocery payment', type: 'payment', sign: -1 },
+    { description: 'Utility bill', type: 'payment', sign: -1 },
+    { description: 'ATM withdrawal', type: 'withdrawal', sign: -1 },
+    { description: 'Salary credit', type: 'deposit', sign: 1 },
+    { description: 'Cafe purchase', type: 'payment', sign: -1 },
+    { description: 'Transfer received', type: 'deposit', sign: 1 },
+    { description: 'Fuel payment', type: 'payment', sign: -1 },
+  ],
+  binance: [
+    { description: 'BTC purchase', type: 'buy', sign: -1 },
+    { description: 'ETH sell', type: 'sell', sign: 1 },
+    { description: 'USDT deposit', type: 'deposit', sign: 1 },
+    { description: 'Trading fee', type: 'fee', sign: -1 },
+    { description: 'BTC sell', type: 'sell', sign: 1 },
+    { description: 'SOL buy', type: 'buy', sign: -1 },
+    { description: 'USDT withdrawal', type: 'withdrawal', sign: -1 },
+    { description: 'ETH purchase', type: 'buy', sign: -1 },
+    { description: 'Spot trade', type: 'trade', sign: 1 },
+  ],
+  ibkr: [
+    { description: 'Stock purchase', type: 'buy', sign: -1 },
+    { description: 'Dividend received', type: 'deposit', sign: 1 },
+    { description: 'Options trade', type: 'trade', sign: 1 },
+    { description: 'Portfolio rebalance', type: 'sell', sign: 1 },
+    { description: 'ETF purchase', type: 'buy', sign: -1 },
+    { description: 'Commission fee', type: 'fee', sign: -1 },
+  ],
+  'manual-cash': [
+    { description: 'Cash deposit', type: 'deposit', sign: 1 },
+    { description: 'Cash withdrawal', type: 'withdrawal', sign: -1 },
+    { description: 'Cash received', type: 'deposit', sign: 1 },
+    { description: 'Cash spent', type: 'payment', sign: -1 },
+  ],
+}
+
 export function generateTransactions(accounts: Account[]): Transaction[] {
-  const types: Transaction['type'][] = [
-    'deposit', 'withdrawal', 'transfer', 'trade', 'fee', 'payment', 'buy', 'sell',
-  ]
-
-  const descriptions: Record<string, string[]> = {
-    wallbit: ['Salary deposit', 'Wire transfer received', 'Freelance payment', 'Account fee'],
-    grabrfi: ['Client payment', 'Transfer to Wise', 'Monthly subscription', 'Inbound wire'],
-    wise: ['International transfer', 'Currency conversion', 'Invoice received', 'Transfer to Brubank'],
-    brubank: ['Grocery payment', 'Utility bill', 'ATM withdrawal', 'Salary credit'],
-    binance: ['BTC purchase', 'ETH sell', 'USDT deposit', 'Trading fee', 'BTC sell', 'SOL buy'],
-    ibkr: ['Stock purchase', 'Dividend received', 'Options trade', 'Portfolio rebalance'],
-    'manual-cash': ['Cash deposit', 'Cash withdrawal', 'Cash received'],
-  }
-
   const txs: Transaction[] = []
 
   accounts.forEach((account) => {
-    const descList = descriptions[account.id] ?? ['Transaction']
-    const count = account.type === 'crypto' ? 12 : account.type === 'investment' ? 6 : 8
+    const templates = ACCOUNT_TX_TEMPLATES[account.id] ?? [
+      { description: 'Transaction', type: 'deposit' as const, sign: 1 as const },
+    ]
+    const count = account.type === 'crypto' ? 10 : account.type === 'investment' ? 5 : 7
 
     for (let i = 0; i < count; i++) {
       const daysAgo = Math.floor(Math.random() * 90)
@@ -211,22 +265,21 @@ export function generateTransactions(accounts: Account[]): Transaction[] {
         0
       )
 
-      const desc = descList[Math.floor(Math.random() * descList.length)]
-      const type = types[Math.floor(Math.random() * types.length)]
-      const isPositive = ['deposit', 'trade', 'sell'].includes(type) || Math.random() > 0.5
-      const baseAmount = account.currency === 'ARS'
-        ? Math.floor(Math.random() * 500000) + 5000
-        : Math.floor(Math.random() * 3000) + 50
-      const amount = isPositive ? baseAmount : -baseAmount
+      const template = templates[Math.floor(Math.random() * templates.length)]
+      const baseAmount =
+        account.currency === 'ARS'
+          ? Math.floor(Math.random() * 500_000) + 5_000
+          : Math.floor(Math.random() * 2_500) + 25
+      const amount = template.sign * baseAmount
 
       txs.push({
-        id: `${account.id}-${i}`,
+        id: `${account.id}-${i}-${date.getTime()}`,
         accountId: account.id,
         accountName: account.name,
-        description: desc,
+        description: template.description,
         amount,
         currency: account.currency,
-        type,
+        type: template.type,
         timestamp: date,
       })
     }
