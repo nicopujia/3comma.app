@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, UIMessage } from 'ai'
-import { SendHorizonal } from 'lucide-react'
+import { SendHorizonal, Bookmark, Check } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import {
   ResponsiveContainer,
@@ -80,16 +80,42 @@ function PieLegend({ data }: { data: ChartSpec['data'] }) {
   )
 }
 
-function ChatChart({ spec }: { spec: ChartSpec }) {
+function chartFingerprint(spec: ChartSpec): string {
+  return JSON.stringify({ t: spec.type, d: spec.data })
+}
+
+function ChatChart({ spec, onSave, isSaved }: { spec: ChartSpec; onSave?: (spec: ChartSpec) => void; isSaved?: boolean }) {
   if (!spec.data?.length) return null
+
+  const handleSave = () => {
+    if (isSaved || !onSave) return
+    onSave(spec)
+  }
 
   return (
     <div className="my-2 overflow-hidden rounded-xl border border-border/50 bg-background p-3">
-      {spec.title && (
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {spec.title}
-        </p>
-      )}
+      <div className="flex items-center justify-between">
+        {spec.title ? (
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {spec.title}
+          </p>
+        ) : <span />}
+        {onSave && (
+          <button
+            onClick={handleSave}
+            disabled={isSaved}
+            className={cn(
+              'mb-2 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-all',
+              isSaved
+                ? 'text-foreground'
+                : 'cursor-pointer text-muted-foreground/60 hover:text-muted-foreground'
+            )}
+          >
+            {isSaved ? <Check className="h-3 w-3" /> : <Bookmark className="h-3 w-3" />}
+            {isSaved ? 'Saved' : 'Save'}
+          </button>
+        )}
+      </div>
 
       {spec.type === 'pie' ? (
         <div className="flex items-center gap-4">
@@ -200,7 +226,6 @@ function parseCharts(text: string): Array<{ type: 'text'; content: string } | { 
         parts.push({ type: 'chart', spec })
       }
     } catch {
-      // If JSON is invalid, render as plain text
       parts.push({ type: 'text', content: match[0] })
     }
     last = match.index + match[0].length
@@ -342,6 +367,12 @@ const INPUT_BOTTOM_PADDING = 12
 export default function ChatPage() {
   const accounts = useAppStore((s) => s.accounts)
   const transactions = useAppStore((s) => s.transactions)
+  const saveChart = useAppStore((s) => s.saveChart)
+  const savedCharts = useAppStore((s) => s.savedCharts)
+  const savedFingerprints = useMemo(
+    () => new Set(savedCharts.map((c) => chartFingerprint(c))),
+    [savedCharts]
+  )
   const contextRef = useRef('')
   contextRef.current = buildContext(accounts, transactions)
 
@@ -376,6 +407,14 @@ export default function ChatPage() {
   useEffect(() => {
     persistMessages(messages)
   }, [messages])
+
+  const handleSaveChart = useCallback((spec: ChartSpec) => {
+    // Use the title truncated to 1-3 words as the label, or chart type
+    const label = spec.title
+      ? spec.title.split(/\s+/).slice(0, 3).join(' ')
+      : spec.type.charAt(0).toUpperCase() + spec.type.slice(1)
+    saveChart({ label, type: spec.type, title: spec.title, data: spec.data })
+  }, [saveChart])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -476,7 +515,7 @@ export default function ChatPage() {
                       <>
                         {parseCharts(text).map((segment, i) =>
                           segment.type === 'chart' ? (
-                            <ChatChart key={i} spec={segment.spec} />
+                            <ChatChart key={i} spec={segment.spec} onSave={handleSaveChart} isSaved={savedFingerprints.has(chartFingerprint(segment.spec))} />
                           ) : (
                             <ReactMarkdown
                               key={i}

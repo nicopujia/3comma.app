@@ -5,14 +5,19 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   Tooltip,
   CartesianGrid,
 } from 'recharts'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, X } from 'lucide-react'
 import Link from 'next/link'
-import { useAppStore } from '@/lib/store'
+import { useAppStore, SavedChart } from '@/lib/store'
 import { getHistoricalData, getAIExplanation, Transaction, toUSD } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
 
@@ -145,13 +150,77 @@ function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) 
   )
 }
 
+const CHART_COLORS = [
+  '#18181b', '#52525b', '#a1a1aa', '#d4d4d8',
+  '#71717a', '#3f3f46', '#e4e4e7', '#27272a',
+]
+
+function SavedChartView({ chart }: { chart: SavedChart }) {
+  return (
+    <div className="px-4 py-4">
+      {chart.title && (
+        <p className="mb-3 px-4 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {chart.title}
+        </p>
+      )}
+      <ResponsiveContainer width="100%" height={220}>
+        {chart.type === 'pie' ? (
+          <PieChart>
+            <Pie
+              data={chart.data}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={50}
+              outerRadius={85}
+              paddingAngle={2}
+              stroke="none"
+              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              labelLine={false}
+              fontSize={10}
+            >
+              {chart.data.map((_, i) => (
+                <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(v: number) => formatUSD(v)}
+            />
+          </PieChart>
+        ) : chart.type === 'line' ? (
+          <LineChart data={chart.data} margin={{ top: 4, right: 16, left: 4, bottom: 4 }}>
+            <CartesianGrid strokeDasharray="0" stroke="var(--border)" strokeOpacity={0.5} vertical={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'var(--muted-foreground)', dy: 6 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+            <YAxis tickFormatter={formatUSD} tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} width={52} tickCount={4} />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--border)', strokeWidth: 1 }} />
+            <Line type="monotone" dataKey="value" stroke="var(--foreground)" strokeWidth={1.5} dot={false} activeDot={{ r: 3, fill: 'var(--foreground)', strokeWidth: 0 }} />
+          </LineChart>
+        ) : (
+          <BarChart data={chart.data} margin={{ top: 4, right: 16, left: 4, bottom: 4 }}>
+            <CartesianGrid strokeDasharray="0" stroke="var(--border)" strokeOpacity={0.5} vertical={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'var(--muted-foreground)', dy: 6 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+            <YAxis tickFormatter={formatUSD} tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} width={52} tickCount={4} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--muted)', opacity: 0.3 }} />
+            <Bar dataKey="value" fill="var(--foreground)" radius={[4, 4, 0, 0]} maxBarSize={36} />
+          </BarChart>
+        )}
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
 export default function AnalysisPage() {
   const [range, setRange] = useState<Range>('1M')
+  const [activeTab, setActiveTab] = useState<string>('net-worth')
   const accounts = useAppStore((s) => s.accounts)
   const transactions = useAppStore((s) => s.transactions)
+  const savedCharts = useAppStore((s) => s.savedCharts)
+  const deleteSavedChart = useAppStore((s) => s.deleteSavedChart)
   const totalLiquidityUSD = useAppStore((s) => s.totalLiquidityUSD)
   const total = totalLiquidityUSD()
   const rangeStart = useMemo(() => getRangeStart(range), [range])
+  const activeChart = savedCharts.find((c) => c.id === activeTab)
 
   const historicalData = useMemo(
     () => getHistoricalData(accounts, range),
@@ -205,68 +274,131 @@ export default function AnalysisPage() {
 
   return (
     <div className="flex flex-col pb-24 pt-12">
-      {/* Range selector */}
-      <div className="flex items-center px-4 pb-6">
-        {RANGES.map((r) => (
-          <button
-            key={r}
-            onClick={() => setRange(r)}
-            className={cn(
-              'flex-1 cursor-pointer rounded-xl py-2 text-xs font-semibold transition-all',
-              range === r
-                ? 'bg-foreground text-background'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground active:bg-muted'
-            )}
+      {/* Chart tabs — horizontal scroll */}
+      {savedCharts.length > 0 && (
+        <div className="mb-2">
+          <div
+            className="no-scrollbar flex items-center gap-2 overflow-x-auto px-4 py-1"
+            style={{
+              maskImage: 'linear-gradient(to right, transparent, black 1rem, black calc(100% - 1rem), transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 1rem, black calc(100% - 1rem), transparent)',
+            }}
           >
-            {r}
-          </button>
-        ))}
-      </div>
+            <button
+              onClick={() => setActiveTab('net-worth')}
+              className={cn(
+                'shrink-0 cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-all',
+                activeTab === 'net-worth'
+                  ? 'bg-foreground text-background'
+                  : 'bg-card text-muted-foreground ring-1 ring-border hover:bg-muted'
+              )}
+            >
+              Net worth
+            </button>
+            {savedCharts.map((chart) => (
+              <div key={chart.id} className="group relative shrink-0">
+                <button
+                  onClick={() => setActiveTab(chart.id)}
+                  className={cn(
+                    'cursor-pointer rounded-full px-3 py-1.5 pr-7 text-xs font-medium transition-all',
+                    activeTab === chart.id
+                      ? 'bg-foreground text-background'
+                      : 'bg-card text-muted-foreground ring-1 ring-border hover:bg-muted'
+                  )}
+                >
+                  {chart.label}
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (activeTab === chart.id) setActiveTab('net-worth')
+                    deleteSavedChart(chart.id)
+                  }}
+                  className={cn(
+                    'absolute right-1 top-1/2 -translate-y-1/2 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full transition-colors',
+                    activeTab === chart.id
+                      ? 'text-background/60 hover:text-background'
+                      : 'text-muted-foreground/40 hover:text-muted-foreground'
+                  )}
+                  aria-label={`Delete ${chart.label}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-      {/* Chart */}
-      <div className="px-2">
-        <ResponsiveContainer width="100%" height={220}>
-          <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-            <CartesianGrid
-              strokeDasharray="0"
-              stroke="var(--border)"
-              strokeOpacity={0.5}
-              vertical={false}
-            />
-            <XAxis
-              dataKey="label"
-              ticks={xTicks}
-              tick={{ fontSize: 10, fill: 'var(--muted-foreground)', dy: 6 }}
-              axisLine={false}
-              tickLine={false}
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              domain={[minValue, maxValue]}
-              tickFormatter={formatUSD}
-              tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
-              axisLine={false}
-              tickLine={false}
-              width={46}
-              tickCount={4}
-            />
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ stroke: 'var(--border)', strokeWidth: 1 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="value"
-              stroke="var(--foreground)"
-              strokeWidth={1.5}
-              dot={false}
-              activeDot={{ r: 3, fill: 'var(--foreground)', strokeWidth: 0 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      {activeChart ? (
+        /* Saved chart view */
+        <SavedChartView chart={activeChart} />
+      ) : (
+        <>
+          {/* Range selector */}
+          <div className="flex items-center px-4 pb-6">
+            {RANGES.map((r) => (
+              <button
+                key={r}
+                onClick={() => setRange(r)}
+                className={cn(
+                  'flex-1 cursor-pointer rounded-xl py-2 text-xs font-semibold transition-all',
+                  range === r
+                    ? 'bg-foreground text-background'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground active:bg-muted'
+                )}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
 
-      <div className="px-6 pt-4">
+          {/* Chart */}
+          <div className="px-2">
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                <CartesianGrid
+                  strokeDasharray="0"
+                  stroke="var(--border)"
+                  strokeOpacity={0.5}
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="label"
+                  ticks={xTicks}
+                  tick={{ fontSize: 10, fill: 'var(--muted-foreground)', dy: 6 }}
+                  axisLine={false}
+                  tickLine={false}
+                  interval="preserveStartEnd"
+                />
+                <YAxis
+                  domain={[minValue, maxValue]}
+                  tickFormatter={formatUSD}
+                  tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={46}
+                  tickCount={4}
+                />
+                <Tooltip
+                  content={<CustomTooltip />}
+                  cursor={{ stroke: 'var(--border)', strokeWidth: 1 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="var(--foreground)"
+                  strokeWidth={1.5}
+                  dot={false}
+                  activeDot={{ r: 3, fill: 'var(--foreground)', strokeWidth: 0 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
+
+      {!activeChart && <div className="px-6 pt-4">
         <div className="mb-3 text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
           {formatPeriodLabel(range)}
         </div>
@@ -320,7 +452,7 @@ export default function AnalysisPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Recent transactions */}
       <div className="mx-6 mt-4 h-px bg-border" />
@@ -376,6 +508,7 @@ export default function AnalysisPage() {
       </div>
 
       {/* Analysis */}
+      {!activeChart && (<>
       <div className="mx-6 h-px bg-border" />
       <div className="flex flex-col gap-3 px-6 pb-4 pt-5">
         <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
@@ -385,6 +518,7 @@ export default function AnalysisPage() {
           <TypewriterText text={aiText} speed={10} />
         </span>
       </div>
+      </>)}
     </div>
   )
 }

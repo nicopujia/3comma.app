@@ -15,12 +15,22 @@ const TX_DATA_VERSION = 2
 const CASH_ACCOUNT_ID = 'manual-cash'
 const CASH_ACCOUNT_NAME = 'Cash'
 
+export interface SavedChart {
+  id: string
+  label: string
+  type: 'bar' | 'line' | 'pie'
+  title?: string
+  data: Array<{ name: string; value: number }>
+  savedAt: number
+}
+
 interface PersistedState {
   onboardingComplete: boolean
   selectedAccountIds: string[]
   accounts: Account[]
   transactions: Transaction[]
   txDataVersion?: number
+  savedCharts: SavedChart[]
 }
 
 interface AppStore extends PersistedState {
@@ -33,6 +43,8 @@ interface AppStore extends PersistedState {
   updateCashTransaction: (id: string, description: string, amount: number) => void
   totalLiquidityUSD: () => number
   activeAccounts: () => Account[]
+  saveChart: (chart: Omit<SavedChart, 'id' | 'savedAt'>) => void
+  deleteSavedChart: (id: string) => void
 }
 
 export const useAppStore = create<AppStore>()(
@@ -42,6 +54,7 @@ export const useAppStore = create<AppStore>()(
       selectedAccountIds: ALL_ACCOUNTS.map((a) => a.id),
       accounts: [],
       transactions: [],
+      savedCharts: [],
 
       completeOnboarding: (selectedIds: string[]) => {
         const accounts = ALL_ACCOUNTS.filter((a) => selectedIds.includes(a.id))
@@ -141,6 +154,19 @@ export const useAppStore = create<AppStore>()(
       },
 
       activeAccounts: () => get().accounts,
+
+      saveChart: (chart) =>
+        set((state) => ({
+          savedCharts: [
+            ...state.savedCharts,
+            { ...chart, id: `chart-${Date.now()}`, savedAt: Date.now() },
+          ],
+        })),
+
+      deleteSavedChart: (id) =>
+        set((state) => ({
+          savedCharts: state.savedCharts.filter((c) => c.id !== id),
+        })),
     }),
     {
       name: '3comma-store',
@@ -149,6 +175,7 @@ export const useAppStore = create<AppStore>()(
         selectedAccountIds: state.selectedAccountIds,
         accounts: state.accounts,
         transactions: state.transactions,
+        savedCharts: state.savedCharts,
       }),
       // JSON.parse turns Date objects into strings — revive them on load
       // Also migrate old transaction types to inflow/outflow
