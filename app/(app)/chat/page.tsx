@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useRef, useEffect, useMemo } from 'react'
+
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, UIMessage } from 'ai'
 import { SendHorizonal } from 'lucide-react'
@@ -334,6 +336,8 @@ function persistMessages(messages: UIMessage[]) {
 
 // Nav bar height + safe area — matches the fixed nav in layout.tsx
 const NAV_HEIGHT = 'calc(3.5rem + env(safe-area-inset-bottom))'
+const MIN_INPUT_HEIGHT = 44
+const INPUT_BOTTOM_PADDING = 12
 
 export default function ChatPage() {
   const accounts = useAppStore((s) => s.accounts)
@@ -344,6 +348,7 @@ export default function ChatPage() {
   const [input, setInput] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const composerRef = useRef<HTMLDivElement>(null)
 
   const [initialMessages] = useState(loadPersistedMessages)
 
@@ -376,14 +381,45 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  const resizeInput = useCallback((element?: HTMLTextAreaElement | null) => {
+    const textarea = element ?? inputRef.current
+    if (!textarea) return
+
+    textarea.style.height = 'auto'
+
+    const composerBottom = composerRef.current?.getBoundingClientRect().bottom
+    const availableHeight = Math.max(
+      MIN_INPUT_HEIGHT,
+      (composerBottom ?? window.innerHeight) - textarea.getBoundingClientRect().top - INPUT_BOTTOM_PADDING
+    )
+
+    textarea.style.height = `${Math.max(MIN_INPUT_HEIGHT, Math.min(textarea.scrollHeight, availableHeight))}px`
+    textarea.style.overflowY = textarea.scrollHeight > availableHeight ? 'auto' : 'hidden'
+  }, [])
+
+  useEffect(() => {
+    resizeInput()
+  }, [input, resizeInput])
+
+  useEffect(() => {
+    const handleResize = () => resizeInput()
+
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    window.visualViewport?.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      window.visualViewport?.removeEventListener('resize', handleResize)
+    }
+  }, [resizeInput])
+
   const handleSend = () => {
     const text = input.trim()
     if (!text || isLoading) return
     sendMessage({ text })
     setInput('')
-    if (inputRef.current) {
-      inputRef.current.style.height = 'auto'
-    }
+    requestAnimationFrame(() => resizeInput())
     inputRef.current?.focus()
   }
 
@@ -498,23 +534,21 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* Input */}
-      <div className="shrink-0 border-t border-border bg-background/95 backdrop-blur-xl">
-        <div className="flex items-end gap-2 px-4 pt-3 pb-3">
+      {/* Input — pinned to the bottom edge, directly above the nav bar */}
+      <div ref={composerRef} className="mb-2 shrink-0 border-t border-border bg-background/95 backdrop-blur-xl">
+        <div className="flex items-end gap-2 px-4 py-3">
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => {
               setInput(e.target.value)
-              e.target.style.height = 'auto'
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`
             }}
             onKeyDown={handleKeyDown}
             placeholder="Ask about your finances..."
             rows={1}
             disabled={isLoading}
-            className="flex-1 resize-none rounded-2xl border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
-            style={{ minHeight: '44px', maxHeight: '120px' }}
+            className="flex-1 resize-none overflow-y-hidden rounded-2xl border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+            style={{ minHeight: `${MIN_INPUT_HEIGHT}px` }}
           />
           <button
             onClick={handleSend}
