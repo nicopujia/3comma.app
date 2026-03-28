@@ -3,13 +3,14 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Home, BarChart2 } from 'lucide-react'
+import { Home, BarChart2, MessageSquare } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 import { Toaster } from 'sonner'
 
 const TABS = [
   { label: 'Home', href: '/home', Icon: Home },
+  { label: 'Chat', href: '/chat', Icon: MessageSquare },
   { label: 'Analysis', href: '/analysis', Icon: BarChart2 },
 ]
 
