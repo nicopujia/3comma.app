@@ -186,9 +186,9 @@ export default function HomePage() {
     .reduce((sum, a) => sum + toUSD(a.balance, a.currency), 0)
 
   return (
-    <div className="flex flex-col">
-      {/* Hero */}
-      <div className="flex flex-col gap-1 px-6 pb-10 pt-16">
+    <div className="flex min-h-[calc(100dvh-6rem)] flex-col">
+      {/* Hero — always visible */}
+      <div className="shrink-0 flex flex-col gap-1 px-6 pb-10 pt-16">
         <div className="flex items-end gap-0">
           <span className="mt-1 self-start pt-3 text-3xl font-light text-muted-foreground">$</span>
           <NumberFlow
@@ -200,13 +200,13 @@ export default function HomePage() {
       </div>
 
       {/* Divider */}
-      <div className="mx-6 h-px bg-border" />
+      <div className="mx-6 shrink-0 h-px bg-border" />
 
-      {/* Collapsible accounts section */}
-      <div className="flex flex-col">
+      {/* Collapsible accounts section — scrolls independently */}
+      <div className="flex min-h-0 flex-1 flex-col">
         <button
           onClick={() => setAccountsOpen((v) => !v)}
-          className="flex cursor-pointer items-center justify-between px-6 py-4 transition-colors hover:bg-muted/50"
+          className="shrink-0 flex cursor-pointer items-center justify-between px-6 py-4 transition-colors hover:bg-muted/50"
         >
           <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
             View breakdown
@@ -219,7 +219,7 @@ export default function HomePage() {
         </button>
 
         {accountsOpen && (
-          <div className="flex flex-col animate-in slide-in-from-top-2 fade-in-0 duration-200">
+          <div className="flex flex-col overflow-y-auto animate-in slide-in-from-top-2 fade-in-0 duration-200">
             {accounts.map((account, i) => {
               const usdValue = toUSD(account.balance, account.currency)
               const percent =

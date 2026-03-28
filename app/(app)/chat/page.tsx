@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { SendHorizonal } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import { useAppStore } from '@/lib/store'
 import { toUSD, FX_ARS_USD } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
@@ -43,14 +44,15 @@ ${recentTxs}`
 }
 
 const SUGGESTED = [
-  'How much money do I have in total?',
-  'Where is most of my money?',
+  'Which account has the most money?',
+  'Am I spending more than I earn?',
   'What were my biggest expenses recently?',
 ]
 
 // Nav bar height + safe area — matches the fixed nav in layout.tsx
-// py-3 (12px × 2) + icon 20px + gap-1 (4px) + label 10px = 58px ≈ 3.625rem
-const NAV_HEIGHT = 'calc(3.625rem + env(safe-area-inset-bottom))'
+// The nav uses safe-bottom which adds env(safe-area-inset-bottom) to its own padding.
+// We match that here so the chat overlay bottom edge sits flush with the nav top edge.
+const NAV_HEIGHT = 'calc(3.5rem + env(safe-area-inset-bottom))'
 
 export default function ChatPage() {
   const accounts = useAppStore((s) => s.accounts)
@@ -102,12 +104,9 @@ export default function ChatPage() {
       style={{ bottom: NAV_HEIGHT }}
     >
       {/* Scrollable messages */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex flex-1 flex-col overflow-y-auto">
         {isEmpty ? (
-          <div className="flex h-full flex-col justify-end gap-2 px-4 py-4">
-            <p className="pb-2 text-center text-sm text-muted-foreground">
-              Your personal finance assistant is ready.
-            </p>
+          <div className="flex flex-1 flex-col justify-end gap-2 px-4 py-4">
             {SUGGESTED.map((s) => (
               <button
                 key={s}
@@ -137,7 +136,20 @@ export default function ChatPage() {
                         : 'rounded-bl-sm bg-card text-foreground'
                     )}
                   >
-                    {text}
+                    {isUser ? text : (
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
+                          strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                          ul: ({ children }) => <ul className="ml-4 list-disc space-y-0.5">{children}</ul>,
+                          ol: ({ children }) => <ol className="ml-4 list-decimal space-y-0.5">{children}</ol>,
+                          li: ({ children }) => <li>{children}</li>,
+                          code: ({ children }) => <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">{children}</code>,
+                        }}
+                      >
+                        {text}
+                      </ReactMarkdown>
+                    )}
                   </div>
                 </div>
               )
@@ -166,7 +178,7 @@ export default function ChatPage() {
 
       {/* Input — pinned to the bottom edge, directly above the nav bar */}
       <div className="shrink-0 border-t border-border bg-background/95 backdrop-blur-xl">
-        <div className="flex items-end gap-2 px-4 py-3">
+        <div className="flex items-end gap-2 px-4 pt-3 pb-3">
           <textarea
             ref={inputRef}
             value={input}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   ResponsiveContainer,
   LineChart,
@@ -41,15 +41,20 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   return (
     <div className="rounded-xl bg-foreground px-3 py-2 shadow-lg">
       <p className="tabular-nums text-xs font-semibold text-background">
-        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(payload[0].value)}
+        {new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          maximumFractionDigits: 0,
+        }).format(payload[0].value)}
       </p>
     </div>
   )
 }
 
-// Typewriter component that streams text character by character.
-// The full text is rendered invisibly first so the container height is locked,
-// preventing reflow/jumping as characters are revealed.
+// TypewriterText: reveals text character-by-character.
+// The invisible ghost span locks the container height from the start,
+// preventing layout reflow while the overlay animates.
+// Uses only <span> elements so it is valid inside any parent.
 function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) {
   const [count, setCount] = useState(0)
   const [done, setDone] = useState(false)
@@ -68,17 +73,19 @@ function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) 
       }
     }, speed)
     return () => clearInterval(id)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text])
 
   return (
-    <span className="relative">
-      {/* Ghost: full text, invisible — locks the container height */}
-      <span aria-hidden className="invisible">{text}</span>
-      {/* Revealed text overlaid absolutely */}
+    <span className="relative block">
+      {/* invisible full text holds the correct container height */}
+      <span aria-hidden className="invisible select-none">{text}</span>
+      {/* revealed text overlaid — does not affect layout */}
       <span className="absolute inset-0">
         {text.slice(0, count)}
-        {!done && <span className="ml-px inline-block h-3.5 w-0.5 animate-pulse bg-foreground/60 align-middle" />}
+        {!done && (
+          <span className="ml-px inline-block h-3.5 w-0.5 animate-pulse bg-foreground/60 align-middle" />
+        )}
       </span>
     </span>
   )
@@ -89,8 +96,12 @@ export default function AnalysisPage() {
   const accounts = useAppStore((s) => s.accounts)
   const totalLiquidityUSD = useAppStore((s) => s.totalLiquidityUSD)
   const total = totalLiquidityUSD()
+  const txCount = useAppStore((s) => s.transactions.length)
 
-  const historicalData = useMemo(() => getHistoricalData(accounts, range), [accounts, range])
+  const historicalData = useMemo(
+    () => getHistoricalData(accounts, range),
+    [accounts, range]
+  )
 
   const chartData = useMemo(() => {
     const maxPoints = 60
@@ -110,12 +121,10 @@ export default function AnalysisPage() {
   const aiText = useMemo(() => getAIExplanation(range, total), [range, total])
 
   const xTicks = useMemo(() => {
-    const count = range === '1W' ? 7 : range === '1M' ? 5 : 4
-    const step = Math.max(1, Math.floor(chartData.length / count))
+    const tickCount = range === '1W' ? 7 : range === '1M' ? 5 : 4
+    const step = Math.max(1, Math.floor(chartData.length / tickCount))
     return chartData.filter((_, i) => i % step === 0).map((d) => d.label)
   }, [chartData, range])
-
-  const txCount = useAppStore((s) => s.transactions.length)
 
   return (
     <div className="flex flex-col pb-24 pt-12">
@@ -141,7 +150,12 @@ export default function AnalysisPage() {
       <div className="px-2">
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="0" stroke="var(--border)" strokeOpacity={0.5} vertical={false} />
+            <CartesianGrid
+              strokeDasharray="0"
+              stroke="var(--border)"
+              strokeOpacity={0.5}
+              vertical={false}
+            />
             <XAxis
               dataKey="label"
               ticks={xTicks}
@@ -159,7 +173,10 @@ export default function AnalysisPage() {
               width={46}
               tickCount={4}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--border)', strokeWidth: 1 }} />
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ stroke: 'var(--border)', strokeWidth: 1 }}
+            />
             <Line
               type="monotone"
               dataKey="value"
@@ -187,13 +204,15 @@ export default function AnalysisPage() {
         </div>
       </Link>
 
-      {/* Analysis text */}
+      {/* Analysis */}
       <div className="mx-6 h-px bg-border" />
-      <div className="flex flex-col gap-3 px-6 pt-5 pb-4">
-        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Analysis</p>
-        <p className="text-pretty text-sm leading-relaxed text-foreground">
+      <div className="flex flex-col gap-3 px-6 pb-4 pt-5">
+        <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+          Analysis
+        </span>
+        <span className="text-pretty text-sm leading-relaxed text-foreground">
           <TypewriterText text={aiText} speed={10} />
-        </p>
+        </span>
       </div>
     </div>
   )
