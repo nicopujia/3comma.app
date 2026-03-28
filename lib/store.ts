@@ -10,6 +10,8 @@ import {
   generateTransactions,
 } from './mock-data'
 
+// Bump this when mock data generation changes to force regeneration
+const TX_DATA_VERSION = 2
 const CASH_ACCOUNT_ID = 'manual-cash'
 const CASH_ACCOUNT_NAME = 'Cash'
 
@@ -18,6 +20,7 @@ interface PersistedState {
   selectedAccountIds: string[]
   accounts: Account[]
   transactions: Transaction[]
+  txDataVersion?: number
 }
 
 interface AppStore extends PersistedState {
@@ -47,6 +50,7 @@ export const useAppStore = create<AppStore>()(
           selectedAccountIds: selectedIds,
           accounts,
           transactions: generateTransactions(accounts),
+          txDataVersion: TX_DATA_VERSION,
         })
       },
 
@@ -148,21 +152,25 @@ export const useAppStore = create<AppStore>()(
       }),
       // JSON.parse turns Date objects into strings — revive them on load
       // Also migrate old transaction types to inflow/outflow
+      // Regenerate transactions when TX_DATA_VERSION bumps
       merge: (persisted, current) => {
         const p = persisted as PersistedState
         const INFLOW_TYPES = new Set(['deposit', 'sell', 'inflow'])
+        const needsRegen = (p.txDataVersion ?? 0) < TX_DATA_VERSION && p.accounts?.length > 0
         return {
           ...current,
           ...p,
+          txDataVersion: needsRegen ? TX_DATA_VERSION : (p.txDataVersion ?? TX_DATA_VERSION),
+          transactions: needsRegen
+            ? generateTransactions(p.accounts)
+            : (p.transactions ?? []).map((tx) => ({
+                ...tx,
+                timestamp: new Date(tx.timestamp),
+                type: INFLOW_TYPES.has(tx.type) ? 'inflow' : 'outflow',
+              })),
           accounts: (p.accounts ?? []).map((account) =>
             account.id === CASH_ACCOUNT_ID ? { ...account, name: CASH_ACCOUNT_NAME } : account
           ),
-          transactions: (p.transactions ?? []).map((tx) => ({
-            ...tx,
-            accountName: tx.accountId === CASH_ACCOUNT_ID ? CASH_ACCOUNT_NAME : tx.accountName,
-            timestamp: new Date(tx.timestamp),
-            type: INFLOW_TYPES.has(tx.type) ? 'inflow' : 'outflow',
-          })),
         }
       },
     }

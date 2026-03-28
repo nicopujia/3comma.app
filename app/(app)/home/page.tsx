@@ -160,7 +160,7 @@ export default function HomePage() {
   const accounts = useAppStore((s) => s.accounts)
   const toggleIncluded = useAppStore((s) => s.toggleIncluded)
   const totalLiquidityUSD = useAppStore((s) => s.totalLiquidityUSD)
-  const [accountsOpen, setAccountsOpen] = useState(false)
+  const [accountsOpen, setAccountsOpen] = useState(true)
   const [cashDialogOpen, setCashDialogOpen] = useState(false)
 
   const total = totalLiquidityUSD()
