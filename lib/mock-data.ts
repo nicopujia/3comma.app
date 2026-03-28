@@ -274,9 +274,9 @@ export function generateTransactions(accounts: Account[]): Transaction[] {
       { description: 'Transaction', type: 'inflow' as const, sign: 1 as const },
     ]
 
-    // ~3-5 transactions per account per month over 12 months
+    // ~3-5 transactions per account per month over 24 months (back to March 2024)
     const perMonth = account.type === 'crypto' ? 5 : account.type === 'investment' ? 3 : 4
-    const months = 12
+    const months = 24
 
     for (let m = 0; m < months; m++) {
       const count = perMonth + Math.floor(rand() * 3) - 1 // slight variation
