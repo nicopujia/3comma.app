@@ -177,8 +177,8 @@ export default function ChatPage() {
       </div>
 
       {/* Input — pinned to the bottom edge, directly above the nav bar */}
-      <div className="shrink-0 border-t border-border bg-background/95 backdrop-blur-xl">
-        <div className="flex items-end gap-2 px-4 pt-3 pb-3">
+      <div className="mb-2 shrink-0 border-t border-border bg-background/95 backdrop-blur-xl">
+        <div className="flex items-center gap-2 px-4 py-3">
           <textarea
             ref={inputRef}
             value={input}
