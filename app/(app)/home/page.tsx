@@ -209,7 +209,7 @@ export default function HomePage() {
           className="flex cursor-pointer items-center justify-between px-6 py-4 transition-colors hover:bg-muted/50"
         >
           <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-            Accounts
+            View breakdown
           </span>
           {accountsOpen ? (
             <ChevronUp className="h-4 w-4 text-muted-foreground" />

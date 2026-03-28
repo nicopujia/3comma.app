@@ -12,7 +12,8 @@ export default function WidgetPage() {
   useEffect(() => {
     setHydrated(true)
     setTotal(totalLiquidityUSD())
-  }, [totalLiquidityUSD])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (!hydrated) return null
 
