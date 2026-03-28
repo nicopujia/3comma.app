@@ -90,7 +90,7 @@ export default function ChatPage() {
   return (
     <div className="flex h-dvh flex-col">
       {/* Header */}
-      <div className="shrink-0 border-b border-border px-6 py-5 pt-14">
+      <div className="shrink-0 border-b border-border px-6 py-5">
         <h1 className="text-base font-semibold">Finance Assistant</h1>
         <p className="text-xs text-muted-foreground">Ask anything about your money</p>
       </div>
@@ -160,8 +160,8 @@ export default function ChatPage() {
       </div>
 
       {/* Input */}
-      <div className="shrink-0 border-t border-border bg-background/90 backdrop-blur-xl">
-        <div className="flex items-end gap-2 px-4 py-3 safe-bottom">
+      <div className="shrink-0 border-t border-border bg-background/90 backdrop-blur-xl safe-bottom">
+        <div className="flex items-end gap-2 px-4 py-3">
           <textarea
             ref={inputRef}
             value={input}

@@ -165,17 +165,8 @@ export default function AnalysisPage() {
         </ResponsiveContainer>
       </div>
 
-      {/* Analysis text */}
-      <div className="mx-6 mt-4 h-px bg-border" />
-      <div className="flex flex-col gap-3 px-6 pt-5">
-        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Analysis</p>
-        <p className="text-pretty text-sm leading-relaxed text-foreground">
-          <TypewriterText text={aiText} speed={10} />
-        </p>
-      </div>
-
       {/* Transactions link */}
-      <div className="mx-6 mt-6 h-px bg-border" />
+      <div className="mx-6 mt-4 h-px bg-border" />
       <Link
         href="/transactions"
         className="flex cursor-pointer items-center justify-between px-6 py-4 transition-colors hover:bg-muted/50"
@@ -188,6 +179,15 @@ export default function AnalysisPage() {
           <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
         </div>
       </Link>
+
+      {/* Analysis text */}
+      <div className="mx-6 h-px bg-border" />
+      <div className="flex flex-col gap-3 px-6 pt-5 pb-4">
+        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Analysis</p>
+        <p className="text-pretty text-sm leading-relaxed text-foreground">
+          <TypewriterText text={aiText} speed={10} />
+        </p>
+      </div>
     </div>
   )
 }
