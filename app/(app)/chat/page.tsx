@@ -52,8 +52,9 @@ const SUGGESTED = [
 ]
 
 // Nav bar height + safe area — matches the fixed nav in layout.tsx
-// py-3 (12px × 2) + icon 20px + gap-1 (4px) + label 10px = 58px ≈ 3.625rem
-const NAV_HEIGHT = 'calc(3.625rem + env(safe-area-inset-bottom))'
+// The nav uses safe-bottom which adds env(safe-area-inset-bottom) to its own padding.
+// We match that here so the chat overlay bottom edge sits flush with the nav top edge.
+const NAV_HEIGHT = 'calc(3.5rem + env(safe-area-inset-bottom))'
 
 export default function ChatPage() {
   const accounts = useAppStore((s) => s.accounts)
@@ -179,7 +180,7 @@ export default function ChatPage() {
 
       {/* Input — pinned to the bottom edge, directly above the nav bar */}
       <div className="shrink-0 border-t border-border bg-background/95 backdrop-blur-xl">
-        <div className="flex items-end gap-2 px-4 py-3">
+        <div className="flex items-end gap-2 px-4 pt-3 pb-3">
           <textarea
             ref={inputRef}
             value={input}

@@ -51,7 +51,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) {
   const [count, setCount] = useState(0)
   const [done, setDone] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
     setCount(0)
@@ -89,12 +89,10 @@ function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) 
   }, [text])
 
   return (
-    <div ref={containerRef}>
+    <span ref={containerRef} className="block">
       {text.slice(0, count)}
-      {!done && (
-        <span className="ml-px inline-block h-3.5 w-0.5 animate-pulse bg-foreground/60 align-middle" />
-      )}
-    </div>
+      {!done && <span className="ml-px inline-block h-3.5 w-0.5 animate-pulse bg-foreground/60 align-middle" />}
+    </span>
   )
 }
 
