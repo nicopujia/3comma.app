@@ -98,6 +98,10 @@ export default function AnalysisPage() {
   const totalLiquidityUSD = useAppStore((s) => s.totalLiquidityUSD)
   const total = totalLiquidityUSD()
 
+  console.log('[v0] transactions in store:', transactions.length)
+  console.log('[v0] first tx:', transactions[0])
+  console.log('[v0] accounts in store:', accounts.length, accounts.map((a) => a.id))
+
   const historicalData = useMemo(() => getHistoricalData(accounts, range), [accounts, range])
 
   const chartData = useMemo(() => {

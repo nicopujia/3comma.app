@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Home, BarChart2 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
@@ -17,13 +17,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const onboardingComplete = useAppStore((s) => s.onboardingComplete)
   const router = useRouter()
   const pathname = usePathname()
+  // Don't render until Zustand has rehydrated from localStorage
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => { setHydrated(true) }, [])
 
   useEffect(() => {
-    if (!onboardingComplete) {
+    if (hydrated && !onboardingComplete) {
       router.replace('/')
     }
-  }, [onboardingComplete, router])
+  }, [hydrated, onboardingComplete, router])
 
+  if (!hydrated) return null
   if (!onboardingComplete) return null
 
   return (

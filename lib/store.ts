@@ -117,6 +117,18 @@ export const useAppStore = create<AppStore>()(
         accounts: state.accounts,
         transactions: state.transactions,
       }),
+      // JSON.parse turns Date objects into strings — revive them on load
+      merge: (persisted, current) => {
+        const p = persisted as PersistedState
+        return {
+          ...current,
+          ...p,
+          transactions: (p.transactions ?? []).map((tx) => ({
+            ...tx,
+            timestamp: new Date(tx.timestamp),
+          })),
+        }
+      },
     }
   )
 )
