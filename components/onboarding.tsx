@@ -204,9 +204,9 @@ export function Onboarding() {
 
         {/* Step 3 — Finish */}
         {step === 3 && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6 pb-12">
+          <div className="flex flex-1 flex-col justify-between px-6 pb-12 pt-10">
             {loading ? (
-              <div className="flex flex-col items-center gap-5">
+              <div className="flex flex-1 flex-col items-center justify-center gap-5">
                 <div className="relative flex h-16 w-16 items-center justify-center">
                   <div className="absolute inset-0 animate-spin rounded-full border-2 border-border border-t-foreground" />
                 </div>
@@ -214,7 +214,7 @@ export function Onboarding() {
               </div>
             ) : (
               <>
-                <div className="flex flex-col items-center gap-3 text-center">
+                <div className="flex flex-col items-center gap-3 pt-6 text-center">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-foreground/10">
                     <Check className="h-8 w-8 text-foreground" strokeWidth={2} />
                   </div>

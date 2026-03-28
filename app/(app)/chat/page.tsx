@@ -87,17 +87,13 @@ export default function ChatPage() {
     }
   }
 
-  return (
-    <div className="flex h-dvh flex-col">
-      {/* Header */}
-      <div className="shrink-0 border-b border-border px-6 py-5">
-        <h1 className="text-base font-semibold">Finance Assistant</h1>
-        <p className="text-xs text-muted-foreground">Ask anything about your money</p>
-      </div>
+  const isEmpty = messages.length === 0
 
-      {/* Messages — only scrollable when there are messages */}
-      <div className={cn('flex flex-col gap-4 px-4', messages.length === 0 ? 'flex-1 justify-end pb-4' : 'flex-1 overflow-y-auto py-6')}>
-        {messages.length === 0 && (
+  return (
+    <div className="flex min-h-[calc(100dvh-6rem)] flex-col">
+      {/* Messages area */}
+      <div className={cn('flex flex-1 flex-col gap-4 px-4', isEmpty ? 'justify-end py-4' : 'py-6')}>
+        {isEmpty && (
           <div className="flex flex-col gap-2">
             <p className="pb-2 text-center text-sm text-muted-foreground">
               Your personal finance assistant is ready.
@@ -122,10 +118,7 @@ export default function ChatPage() {
             .join('')
 
           return (
-            <div
-              key={msg.id}
-              className={cn('flex', isUser ? 'justify-end' : 'justify-start')}
-            >
+            <div key={msg.id} className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
               <div
                 className={cn(
                   'max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
@@ -159,8 +152,8 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="shrink-0 border-t border-border bg-background/90 backdrop-blur-xl safe-bottom">
+      {/* Input — sticky to the bottom of the scroll container, above the nav bar */}
+      <div className="sticky bottom-24 border-t border-border bg-background/95 backdrop-blur-xl">
         <div className="flex items-end gap-2 px-4 py-3">
           <textarea
             ref={inputRef}
