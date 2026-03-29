@@ -48,11 +48,14 @@ Format — use EXACTLY this (triple-backtick fenced code block with language "ch
 
 IMPORTANT: Charts MUST use triple-backtick fenced code blocks (\`\`\`chart ... \`\`\`). Do NOT use XML tags like <chart>.
 
+DEFAULT: Include a chart in almost every response. Charts make data easier to understand. The ONLY exception is a simple single-value answer (e.g. "how much in Wise?" → just the number, no chart).
+
 When to include a chart:
 - User says "graph", "chart", "show me", "gráfico", "grafico", "diagrama", "mostrá", "mostra", "compare" → MANDATORY chart.
 - User mentions categories (food, cleaning, transport, comida, limpieza, etc.) → MANDATORY chart using data from "Top spending categories" or "Monthly spending by category".
 - Comparing multiple numbers (accounts, categories, months) → MANDATORY chart.
-- Simple single-value answer (e.g. "how much in Wise?") → no chart needed.
+- User asks about spending, balance, trends, accounts → include a chart.
+- When in doubt → include a chart.
 
 Chart type guide:
 - "bar" for comparisons. "pie" for proportions (max 5 slices). "line" for trends over time.
