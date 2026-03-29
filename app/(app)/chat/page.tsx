@@ -24,6 +24,7 @@ import {
 import { useAppStore } from '@/lib/store'
 import { toUSD, FX_ARS_USD } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
+import { ToolInvocation as ToolInvocationComponent } from '@/components/tool-invocations/tool-invocation'
 
 const CHART_COLORS = [
   '#18181b', // zinc-900
@@ -248,7 +249,8 @@ function buildContext(
     .map((a) => {
       const usd = toUSD(a.balance, a.currency)
       const fxNote = a.currency === 'ARS' ? ` (${a.balance.toLocaleString()} ARS at ${FX_ARS_USD} ARS/USD)` : ''
-      return `- ${a.name} [${a.type}, ${a.currency}]: $${usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD${fxNote}${a.included ? '' : ' [excluded from total]'}`
+      const wallbitNote = a.id === 'wallbit' ? ' [USE TOOLS for real-time data — balance here may be stale]' : ''
+      return `- ${a.name} [${a.type}, ${a.currency}]: $${usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD${fxNote}${a.included ? '' : ' [excluded from total]'}${wallbitNote}`
     })
     .join('\n')
 
@@ -343,7 +345,18 @@ function loadPersistedMessages(): UIMessage[] {
   try {
     const raw = localStorage.getItem(CHAT_STORAGE_KEY)
     if (!raw) return []
-    return JSON.parse(raw) as UIMessage[]
+    const msgs = JSON.parse(raw) as UIMessage[]
+    // Filter out stale approval-requested states (approval IDs are invalid across sessions)
+    return msgs.map((msg) => ({
+      ...msg,
+      parts: msg.parts.filter((p) => {
+        if (p.type.startsWith('tool-')) {
+          const state = (p as { state?: string }).state
+          return state !== 'approval-requested' && state !== 'approval-responded'
+        }
+        return true
+      }),
+    }))
   } catch {
     return []
   }
@@ -388,20 +401,35 @@ export default function ChatPage() {
       new DefaultChatTransport({
         api: '/api/chat',
         prepareSendMessagesRequest: ({ id, messages }) => ({
-          body: { id, messages: messages.slice(-10), context: contextRef.current },
+          body: { id, messages: messages.slice(-20), context: contextRef.current },
         }),
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, setMessages, status, addToolApprovalResponse } = useChat({
     transport,
     messages: initialMessages.length > 0 ? initialMessages : undefined,
+    sendAutomaticallyWhen: ({ messages: msgs }) => {
+      // Only auto-send when the last message has a tool part that was just approved/denied
+      const last = msgs[msgs.length - 1]
+      if (!last || last.role !== 'assistant') return false
+      return last.parts.some(
+        (p) =>
+          p.type.startsWith('tool-') &&
+          (p as { state?: string }).state === 'approval-responded',
+      )
+    },
   })
 
   const isLoading = status === 'streaming' || status === 'submitted'
   const isEmpty = messages.length === 0
+
+  const handleResetChat = useCallback(() => {
+    setMessages([])
+    persistMessages([])
+  }, [setMessages])
 
   // Persist messages on change
   useEffect(() => {
@@ -474,6 +502,19 @@ export default function ChatPage() {
       className="fixed inset-x-0 top-0 z-40 flex flex-col bg-background"
       style={{ bottom: NAV_HEIGHT }}
     >
+      {/* Reset button */}
+      {!isEmpty && (
+        <div className="flex shrink-0 items-center justify-end border-b border-border px-4 py-2">
+          <button
+            onClick={handleResetChat}
+            disabled={isLoading}
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+          >
+New chat
+          </button>
+        </div>
+      )}
+
       {/* Scrollable messages */}
       <div className="flex flex-1 flex-col overflow-y-auto">
         {isEmpty ? (
@@ -492,48 +533,94 @@ export default function ChatPage() {
           <div className="flex flex-col gap-4 px-4 py-6">
             {messages.map((msg) => {
               const isUser = msg.role === 'user'
-              const rawText = msg.parts
-                .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-                .map((p) => p.text)
-                .join('')
-              const text = isUser ? rawText : stripThinking(rawText)
 
-              // Hide assistant bubble while still thinking (no visible content yet)
-              if (!isUser && !text) return null
+              // For user messages, just extract text
+              if (isUser) {
+                const text = msg.parts
+                  .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+                  .map((p) => p.text)
+                  .join('')
+                return (
+                  <div key={msg.id} className="flex justify-end">
+                    <div className="max-w-[82%] rounded-2xl rounded-br-sm bg-foreground px-4 py-3 text-sm leading-relaxed text-background">
+                      {text}
+                    </div>
+                  </div>
+                )
+              }
+
+              // Assistant messages: render each part (text + tool-<name>)
+              const hasVisibleContent = msg.parts.some((p) => {
+                if (p.type === 'text') return !!stripThinking((p as { text: string }).text)
+                if (p.type.startsWith('tool-')) return true
+                return false
+              })
+              if (!hasVisibleContent) return null
 
               return (
-                <div key={msg.id} className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
-                  <div
-                    className={cn(
-                      'max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
-                      isUser
-                        ? 'rounded-br-sm bg-foreground text-background'
-                        : 'rounded-bl-sm bg-card text-foreground'
-                    )}
-                  >
-                    {isUser ? text : (
-                      <>
-                        {parseCharts(text).map((segment, i) =>
-                          segment.type === 'chart' ? (
-                            <ChatChart key={i} spec={segment.spec} onSave={handleSaveChart} isSaved={savedFingerprints.has(chartFingerprint(segment.spec))} />
-                          ) : (
-                            <ReactMarkdown
-                              key={i}
-                              components={{
-                                p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
-                                strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-                                ul: ({ children }) => <ul className="ml-4 list-disc space-y-0.5">{children}</ul>,
-                                ol: ({ children }) => <ol className="ml-4 list-decimal space-y-0.5">{children}</ol>,
-                                li: ({ children }) => <li>{children}</li>,
-                                code: ({ children }) => <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">{children}</code>,
-                              }}
-                            >
-                              {segment.content}
-                            </ReactMarkdown>
-                          )
-                        )}
-                      </>
-                    )}
+                <div key={msg.id} className="flex justify-start">
+                  <div className="max-w-[82%] rounded-2xl rounded-bl-sm bg-card px-4 py-3 text-sm leading-relaxed text-foreground">
+                    {msg.parts.map((part, i) => {
+                      // Text parts — existing markdown + chart rendering
+                      if (part.type === 'text') {
+                        const cleaned = stripThinking((part as { text: string }).text)
+                        if (!cleaned) return null
+                        return (
+                          <div key={i}>
+                            {parseCharts(cleaned).map((segment, j) =>
+                              segment.type === 'chart' ? (
+                                <ChatChart key={j} spec={segment.spec} onSave={handleSaveChart} isSaved={savedFingerprints.has(chartFingerprint(segment.spec))} />
+                              ) : (
+                                <ReactMarkdown
+                                  key={j}
+                                  components={{
+                                    p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
+                                    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                                    ul: ({ children }) => <ul className="ml-4 list-disc space-y-0.5">{children}</ul>,
+                                    ol: ({ children }) => <ol className="ml-4 list-decimal space-y-0.5">{children}</ol>,
+                                    li: ({ children }) => <li>{children}</li>,
+                                    code: ({ children }) => <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">{children}</code>,
+                                  }}
+                                >
+                                  {segment.content}
+                                </ReactMarkdown>
+                              )
+                            )}
+                          </div>
+                        )
+                      }
+
+                      // Tool parts — type is "tool-<toolName>"
+                      if (part.type.startsWith('tool-')) {
+                        const toolPart = part as {
+                          type: string
+                          toolCallId: string
+                          state: string
+                          input?: Record<string, unknown>
+                          output?: unknown
+                          errorText?: string
+                          approval?: { id: string; approved?: boolean }
+                        }
+                        const toolName = toolPart.type.replace('tool-', '')
+                        return (
+                          <ToolInvocationComponent
+                            key={i}
+                            toolName={toolName}
+                            state={toolPart.state}
+                            input={toolPart.input}
+                            output={toolPart.output}
+                            errorText={toolPart.errorText}
+                            approval={toolPart.approval}
+                            onApprove={(id) => addToolApprovalResponse({ id, approved: true })}
+                            onDeny={(id) => addToolApprovalResponse({ id, approved: false, reason: 'User cancelled' })}
+                            isStreaming={isLoading}
+                          />
+                        )
+                      }
+
+                      // Skip other part types (reasoning, step-start, etc.)
+                      return null
+                    })}
                   </div>
                 </div>
               )
@@ -545,10 +632,11 @@ export default function ChatPage() {
                 ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
                 .map((p) => p.text)
                 .join('') ?? ''
+              const hasToolParts = lastMsg?.parts?.some((p) => p.type.startsWith('tool-')) ?? false
               const noAssistantYet = lastMsg?.role !== 'assistant'
               const visibleText = lastMsg?.role === 'assistant' ? stripThinking(lastText) : ''
 
-              if (noAssistantYet || (lastMsg?.role === 'assistant' && !visibleText)) {
+              if (noAssistantYet || (lastMsg?.role === 'assistant' && !visibleText && !hasToolParts)) {
                 return (
                   <div className="flex justify-start">
                     <div className="rounded-2xl rounded-bl-sm bg-card px-4 py-3">
