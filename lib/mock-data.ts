@@ -12,6 +12,31 @@ export interface Account {
   color: string
 }
 
+export type TransactionCategory =
+  | 'food'
+  | 'transport'
+  | 'housing'
+  | 'entertainment'
+  | 'health'
+  | 'education'
+  | 'clothing'
+  | 'subscriptions'
+  | 'utilities'
+  | 'cleaning'
+  | 'pets'
+  | 'gifts'
+  | 'travel'
+  | 'insurance'
+  | 'taxes'
+  | 'salary'
+  | 'freelance'
+  | 'investments'
+  | 'crypto'
+  | 'transfers'
+  | 'fees'
+  | 'refunds'
+  | 'other'
+
 export interface Transaction {
   id: string
   accountId: string
@@ -20,6 +45,7 @@ export interface Transaction {
   amount: number
   currency: Currency
   type: 'inflow' | 'outflow'
+  category: TransactionCategory
   timestamp: Date
 }
 
@@ -332,158 +358,172 @@ interface AccountTxTemplate {
   description: string
   type: Transaction['type']
   sign: 1 | -1
+  category: TransactionCategory
 }
 
 const ACCOUNT_TX_TEMPLATES: Record<string, AccountTxTemplate[]> = {
   wallbit: [
-    { description: 'Salary deposit', type: 'inflow', sign: 1 },
-    { description: 'Wire transfer received', type: 'inflow', sign: 1 },
-    { description: 'Freelance payment', type: 'inflow', sign: 1 },
-    { description: 'Account fee', type: 'outflow', sign: -1 },
-    { description: 'Transfer to Wise', type: 'outflow', sign: -1 },
-    { description: 'Netflix subscription', type: 'outflow', sign: -1 },
-    { description: 'Transfer to GrabrFi', type: 'outflow', sign: -1 },
-    { description: 'Freelance invoice', type: 'inflow', sign: 1 },
+    { description: 'Salary deposit', type: 'inflow', sign: 1, category: 'salary' },
+    { description: 'Wire transfer received', type: 'inflow', sign: 1, category: 'transfers' },
+    { description: 'Freelance payment', type: 'inflow', sign: 1, category: 'freelance' },
+    { description: 'Account fee', type: 'outflow', sign: -1, category: 'fees' },
+    { description: 'Transfer to Wise', type: 'outflow', sign: -1, category: 'transfers' },
+    { description: 'Netflix subscription', type: 'outflow', sign: -1, category: 'subscriptions' },
+    { description: 'Transfer to GrabrFi', type: 'outflow', sign: -1, category: 'transfers' },
+    { description: 'Freelance invoice', type: 'inflow', sign: 1, category: 'freelance' },
   ],
   grabrfi: [
-    { description: 'Client payment received', type: 'inflow', sign: 1 },
-    { description: 'Transfer to Wise', type: 'outflow', sign: -1 },
-    { description: 'Monthly subscription', type: 'outflow', sign: -1 },
-    { description: 'Inbound wire', type: 'inflow', sign: 1 },
-    { description: 'SaaS tool payment', type: 'outflow', sign: -1 },
-    { description: 'Consulting fee received', type: 'inflow', sign: 1 },
+    { description: 'Client payment received', type: 'inflow', sign: 1, category: 'freelance' },
+    { description: 'Transfer to Wise', type: 'outflow', sign: -1, category: 'transfers' },
+    { description: 'Monthly subscription', type: 'outflow', sign: -1, category: 'subscriptions' },
+    { description: 'Inbound wire', type: 'inflow', sign: 1, category: 'transfers' },
+    { description: 'SaaS tool payment', type: 'outflow', sign: -1, category: 'subscriptions' },
+    { description: 'Consulting fee received', type: 'inflow', sign: 1, category: 'freelance' },
   ],
   wise: [
-    { description: 'International transfer received', type: 'inflow', sign: 1 },
-    { description: 'Currency conversion fee', type: 'outflow', sign: -1 },
-    { description: 'Invoice received', type: 'inflow', sign: 1 },
-    { description: 'Transfer to Brubank', type: 'outflow', sign: -1 },
-    { description: 'Contractor payment', type: 'outflow', sign: -1 },
-    { description: 'Hosting payment', type: 'outflow', sign: -1 },
+    { description: 'International transfer received', type: 'inflow', sign: 1, category: 'transfers' },
+    { description: 'Currency conversion fee', type: 'outflow', sign: -1, category: 'fees' },
+    { description: 'Invoice received', type: 'inflow', sign: 1, category: 'freelance' },
+    { description: 'Transfer to Brubank', type: 'outflow', sign: -1, category: 'transfers' },
+    { description: 'Contractor payment', type: 'outflow', sign: -1, category: 'freelance' },
+    { description: 'Hosting payment', type: 'outflow', sign: -1, category: 'subscriptions' },
   ],
   brubank: [
-    { description: 'Grocery payment', type: 'outflow', sign: -1 },
-    { description: 'Utility bill', type: 'outflow', sign: -1 },
-    { description: 'ATM withdrawal', type: 'outflow', sign: -1 },
-    { description: 'Salary credit', type: 'inflow', sign: 1 },
-    { description: 'Cafe purchase', type: 'outflow', sign: -1 },
-    { description: 'Transfer received', type: 'inflow', sign: 1 },
-    { description: 'Fuel payment', type: 'outflow', sign: -1 },
+    { description: 'Grocery payment', type: 'outflow', sign: -1, category: 'food' },
+    { description: 'Utility bill', type: 'outflow', sign: -1, category: 'utilities' },
+    { description: 'ATM withdrawal', type: 'outflow', sign: -1, category: 'other' },
+    { description: 'Salary credit', type: 'inflow', sign: 1, category: 'salary' },
+    { description: 'Cafe purchase', type: 'outflow', sign: -1, category: 'food' },
+    { description: 'Transfer received', type: 'inflow', sign: 1, category: 'transfers' },
+    { description: 'Fuel payment', type: 'outflow', sign: -1, category: 'transport' },
   ],
   binance: [
-    { description: 'BTC purchase', type: 'outflow', sign: -1 },
-    { description: 'ETH sell', type: 'inflow', sign: 1 },
-    { description: 'USDT deposit', type: 'inflow', sign: 1 },
-    { description: 'Trading fee', type: 'outflow', sign: -1 },
-    { description: 'BTC sell', type: 'inflow', sign: 1 },
-    { description: 'SOL buy', type: 'outflow', sign: -1 },
-    { description: 'USDT withdrawal', type: 'outflow', sign: -1 },
-    { description: 'ETH purchase', type: 'outflow', sign: -1 },
+    { description: 'BTC purchase', type: 'outflow', sign: -1, category: 'crypto' },
+    { description: 'ETH sell', type: 'inflow', sign: 1, category: 'crypto' },
+    { description: 'USDT deposit', type: 'inflow', sign: 1, category: 'crypto' },
+    { description: 'Trading fee', type: 'outflow', sign: -1, category: 'fees' },
+    { description: 'BTC sell', type: 'inflow', sign: 1, category: 'crypto' },
+    { description: 'SOL buy', type: 'outflow', sign: -1, category: 'crypto' },
+    { description: 'USDT withdrawal', type: 'outflow', sign: -1, category: 'crypto' },
+    { description: 'ETH purchase', type: 'outflow', sign: -1, category: 'crypto' },
   ],
   ibkr: [
-    { description: 'Stock purchase', type: 'outflow', sign: -1 },
-    { description: 'Dividend received', type: 'inflow', sign: 1 },
-    { description: 'Portfolio rebalance sell', type: 'inflow', sign: 1 },
-    { description: 'ETF purchase', type: 'outflow', sign: -1 },
-    { description: 'Commission fee', type: 'outflow', sign: -1 },
+    { description: 'Stock purchase', type: 'outflow', sign: -1, category: 'investments' },
+    { description: 'Dividend received', type: 'inflow', sign: 1, category: 'investments' },
+    { description: 'Portfolio rebalance sell', type: 'inflow', sign: 1, category: 'investments' },
+    { description: 'ETF purchase', type: 'outflow', sign: -1, category: 'investments' },
+    { description: 'Commission fee', type: 'outflow', sign: -1, category: 'fees' },
   ],
   'manual-cash': [
-    { description: 'Cash received', type: 'inflow', sign: 1 },
-    { description: 'Cash spent', type: 'outflow', sign: -1 },
+    { description: 'Cash received', type: 'inflow', sign: 1, category: 'other' },
+    { description: 'Cash spent', type: 'outflow', sign: -1, category: 'other' },
   ],
   mercadopago: [
-    { description: 'QR payment', type: 'outflow', sign: -1 },
-    { description: 'Transfer received', type: 'inflow', sign: 1 },
-    { description: 'Online purchase', type: 'outflow', sign: -1 },
-    { description: 'Money request received', type: 'inflow', sign: 1 },
-    { description: 'Bill payment', type: 'outflow', sign: -1 },
-    { description: 'Refund', type: 'inflow', sign: 1 },
+    { description: 'QR payment — Supermarket', type: 'outflow', sign: -1, category: 'food' },
+    { description: 'Transfer received', type: 'inflow', sign: 1, category: 'transfers' },
+    { description: 'Online purchase — MercadoLibre', type: 'outflow', sign: -1, category: 'other' },
+    { description: 'Money request received', type: 'inflow', sign: 1, category: 'transfers' },
+    { description: 'Bill payment — Electricity', type: 'outflow', sign: -1, category: 'utilities' },
+    { description: 'Refund', type: 'inflow', sign: 1, category: 'refunds' },
+    { description: 'QR payment — Pharmacy', type: 'outflow', sign: -1, category: 'health' },
+    { description: 'QR payment — Pet shop', type: 'outflow', sign: -1, category: 'pets' },
+    { description: 'QR payment — Cleaning supplies', type: 'outflow', sign: -1, category: 'cleaning' },
   ],
   uala: [
-    { description: 'Card purchase', type: 'outflow', sign: -1 },
-    { description: 'Transfer received', type: 'inflow', sign: 1 },
-    { description: 'Salary deposit', type: 'inflow', sign: 1 },
-    { description: 'Subscription payment', type: 'outflow', sign: -1 },
-    { description: 'ATM withdrawal', type: 'outflow', sign: -1 },
+    { description: 'Card purchase — Restaurant', type: 'outflow', sign: -1, category: 'food' },
+    { description: 'Transfer received', type: 'inflow', sign: 1, category: 'transfers' },
+    { description: 'Salary deposit', type: 'inflow', sign: 1, category: 'salary' },
+    { description: 'Spotify subscription', type: 'outflow', sign: -1, category: 'subscriptions' },
+    { description: 'ATM withdrawal', type: 'outflow', sign: -1, category: 'other' },
+    { description: 'Card purchase — Clothing store', type: 'outflow', sign: -1, category: 'clothing' },
+    { description: 'Card purchase — Uber ride', type: 'outflow', sign: -1, category: 'transport' },
   ],
   naranjax: [
-    { description: 'Card purchase', type: 'outflow', sign: -1 },
-    { description: 'Transfer received', type: 'inflow', sign: 1 },
-    { description: 'Bill payment', type: 'outflow', sign: -1 },
-    { description: 'Cashback received', type: 'inflow', sign: 1 },
+    { description: 'Card purchase — Bakery', type: 'outflow', sign: -1, category: 'food' },
+    { description: 'Transfer received', type: 'inflow', sign: 1, category: 'transfers' },
+    { description: 'Bill payment — Internet', type: 'outflow', sign: -1, category: 'utilities' },
+    { description: 'Cashback received', type: 'inflow', sign: 1, category: 'refunds' },
+    { description: 'Card purchase — Bookstore', type: 'outflow', sign: -1, category: 'education' },
   ],
   revolut: [
-    { description: 'Card payment', type: 'outflow', sign: -1 },
-    { description: 'Transfer received', type: 'inflow', sign: 1 },
-    { description: 'Currency exchange', type: 'outflow', sign: -1 },
-    { description: 'Salary deposit', type: 'inflow', sign: 1 },
-    { description: 'Subscription', type: 'outflow', sign: -1 },
+    { description: 'Card payment — Airline tickets', type: 'outflow', sign: -1, category: 'travel' },
+    { description: 'Transfer received', type: 'inflow', sign: 1, category: 'transfers' },
+    { description: 'Currency exchange', type: 'outflow', sign: -1, category: 'fees' },
+    { description: 'Salary deposit', type: 'inflow', sign: 1, category: 'salary' },
+    { description: 'YouTube Premium', type: 'outflow', sign: -1, category: 'subscriptions' },
+    { description: 'Card payment — Hotel', type: 'outflow', sign: -1, category: 'travel' },
   ],
   paypal: [
-    { description: 'Payment received', type: 'inflow', sign: 1 },
-    { description: 'Online purchase', type: 'outflow', sign: -1 },
-    { description: 'Freelance payment', type: 'inflow', sign: 1 },
-    { description: 'Subscription payment', type: 'outflow', sign: -1 },
-    { description: 'Refund received', type: 'inflow', sign: 1 },
+    { description: 'Payment received', type: 'inflow', sign: 1, category: 'freelance' },
+    { description: 'Online purchase — Amazon', type: 'outflow', sign: -1, category: 'other' },
+    { description: 'Freelance payment', type: 'inflow', sign: 1, category: 'freelance' },
+    { description: 'Adobe subscription', type: 'outflow', sign: -1, category: 'subscriptions' },
+    { description: 'Refund received', type: 'inflow', sign: 1, category: 'refunds' },
+    { description: 'Online course — Udemy', type: 'outflow', sign: -1, category: 'education' },
+    { description: 'Gift purchase', type: 'outflow', sign: -1, category: 'gifts' },
   ],
   galicia: [
-    { description: 'Salary deposit', type: 'inflow', sign: 1 },
-    { description: 'Debit card purchase', type: 'outflow', sign: -1 },
-    { description: 'Transfer received', type: 'inflow', sign: 1 },
-    { description: 'Utility bill', type: 'outflow', sign: -1 },
-    { description: 'ATM withdrawal', type: 'outflow', sign: -1 },
-    { description: 'Wire transfer', type: 'outflow', sign: -1 },
+    { description: 'Salary deposit', type: 'inflow', sign: 1, category: 'salary' },
+    { description: 'Debit card purchase — Supermarket', type: 'outflow', sign: -1, category: 'food' },
+    { description: 'Transfer received', type: 'inflow', sign: 1, category: 'transfers' },
+    { description: 'Utility bill — Gas', type: 'outflow', sign: -1, category: 'utilities' },
+    { description: 'ATM withdrawal', type: 'outflow', sign: -1, category: 'other' },
+    { description: 'Wire transfer — Rent', type: 'outflow', sign: -1, category: 'housing' },
+    { description: 'Insurance payment — Health', type: 'outflow', sign: -1, category: 'insurance' },
   ],
   santander: [
-    { description: 'Salary credit', type: 'inflow', sign: 1 },
-    { description: 'Debit purchase', type: 'outflow', sign: -1 },
-    { description: 'Transfer received', type: 'inflow', sign: 1 },
-    { description: 'Insurance payment', type: 'outflow', sign: -1 },
-    { description: 'Loan payment', type: 'outflow', sign: -1 },
+    { description: 'Salary credit', type: 'inflow', sign: 1, category: 'salary' },
+    { description: 'Debit purchase — Gym membership', type: 'outflow', sign: -1, category: 'health' },
+    { description: 'Transfer received', type: 'inflow', sign: 1, category: 'transfers' },
+    { description: 'Insurance payment — Car', type: 'outflow', sign: -1, category: 'insurance' },
+    { description: 'Loan payment — Mortgage', type: 'outflow', sign: -1, category: 'housing' },
+    { description: 'Tax payment — AFIP', type: 'outflow', sign: -1, category: 'taxes' },
   ],
   bbva: [
-    { description: 'Salary deposit', type: 'inflow', sign: 1 },
-    { description: 'Card purchase', type: 'outflow', sign: -1 },
-    { description: 'Transfer received', type: 'inflow', sign: 1 },
-    { description: 'Service payment', type: 'outflow', sign: -1 },
-    { description: 'ATM withdrawal', type: 'outflow', sign: -1 },
+    { description: 'Salary deposit', type: 'inflow', sign: 1, category: 'salary' },
+    { description: 'Card purchase — Electronics', type: 'outflow', sign: -1, category: 'other' },
+    { description: 'Transfer received', type: 'inflow', sign: 1, category: 'transfers' },
+    { description: 'Service payment — Phone bill', type: 'outflow', sign: -1, category: 'utilities' },
+    { description: 'ATM withdrawal', type: 'outflow', sign: -1, category: 'other' },
+    { description: 'Card purchase — Cleaning service', type: 'outflow', sign: -1, category: 'cleaning' },
+    { description: 'Card purchase — Dog food', type: 'outflow', sign: -1, category: 'pets' },
   ],
   coinbase: [
-    { description: 'BTC purchase', type: 'outflow', sign: -1 },
-    { description: 'ETH sell', type: 'inflow', sign: 1 },
-    { description: 'USDC deposit', type: 'inflow', sign: 1 },
-    { description: 'Trading fee', type: 'outflow', sign: -1 },
-    { description: 'SOL purchase', type: 'outflow', sign: -1 },
-    { description: 'BTC sell', type: 'inflow', sign: 1 },
+    { description: 'BTC purchase', type: 'outflow', sign: -1, category: 'crypto' },
+    { description: 'ETH sell', type: 'inflow', sign: 1, category: 'crypto' },
+    { description: 'USDC deposit', type: 'inflow', sign: 1, category: 'crypto' },
+    { description: 'Trading fee', type: 'outflow', sign: -1, category: 'fees' },
+    { description: 'SOL purchase', type: 'outflow', sign: -1, category: 'crypto' },
+    { description: 'BTC sell', type: 'inflow', sign: 1, category: 'crypto' },
   ],
   kraken: [
-    { description: 'BTC purchase', type: 'outflow', sign: -1 },
-    { description: 'ETH sell', type: 'inflow', sign: 1 },
-    { description: 'USD deposit', type: 'inflow', sign: 1 },
-    { description: 'Trading fee', type: 'outflow', sign: -1 },
-    { description: 'ADA purchase', type: 'outflow', sign: -1 },
-    { description: 'Withdrawal', type: 'outflow', sign: -1 },
+    { description: 'BTC purchase', type: 'outflow', sign: -1, category: 'crypto' },
+    { description: 'ETH sell', type: 'inflow', sign: 1, category: 'crypto' },
+    { description: 'USD deposit', type: 'inflow', sign: 1, category: 'crypto' },
+    { description: 'Trading fee', type: 'outflow', sign: -1, category: 'fees' },
+    { description: 'ADA purchase', type: 'outflow', sign: -1, category: 'crypto' },
+    { description: 'Withdrawal', type: 'outflow', sign: -1, category: 'transfers' },
   ],
   schwab: [
-    { description: 'Stock purchase', type: 'outflow', sign: -1 },
-    { description: 'Dividend received', type: 'inflow', sign: 1 },
-    { description: 'ETF purchase', type: 'outflow', sign: -1 },
-    { description: 'Stock sale', type: 'inflow', sign: 1 },
-    { description: 'Account fee', type: 'outflow', sign: -1 },
+    { description: 'Stock purchase', type: 'outflow', sign: -1, category: 'investments' },
+    { description: 'Dividend received', type: 'inflow', sign: 1, category: 'investments' },
+    { description: 'ETF purchase', type: 'outflow', sign: -1, category: 'investments' },
+    { description: 'Stock sale', type: 'inflow', sign: 1, category: 'investments' },
+    { description: 'Account fee', type: 'outflow', sign: -1, category: 'fees' },
   ],
   fidelity: [
-    { description: 'Mutual fund purchase', type: 'outflow', sign: -1 },
-    { description: 'Dividend received', type: 'inflow', sign: 1 },
-    { description: 'Bond purchase', type: 'outflow', sign: -1 },
-    { description: 'Stock sale', type: 'inflow', sign: 1 },
-    { description: '401k contribution', type: 'outflow', sign: -1 },
+    { description: 'Mutual fund purchase', type: 'outflow', sign: -1, category: 'investments' },
+    { description: 'Dividend received', type: 'inflow', sign: 1, category: 'investments' },
+    { description: 'Bond purchase', type: 'outflow', sign: -1, category: 'investments' },
+    { description: 'Stock sale', type: 'inflow', sign: 1, category: 'investments' },
+    { description: '401k contribution', type: 'outflow', sign: -1, category: 'investments' },
   ],
   iol: [
-    { description: 'CEDEAR purchase', type: 'outflow', sign: -1 },
-    { description: 'Bond coupon received', type: 'inflow', sign: 1 },
-    { description: 'FCI subscription', type: 'outflow', sign: -1 },
-    { description: 'Stock sale', type: 'inflow', sign: 1 },
-    { description: 'Commission fee', type: 'outflow', sign: -1 },
+    { description: 'CEDEAR purchase', type: 'outflow', sign: -1, category: 'investments' },
+    { description: 'Bond coupon received', type: 'inflow', sign: 1, category: 'investments' },
+    { description: 'FCI subscription', type: 'outflow', sign: -1, category: 'investments' },
+    { description: 'Stock sale', type: 'inflow', sign: 1, category: 'investments' },
+    { description: 'Commission fee', type: 'outflow', sign: -1, category: 'fees' },
   ],
 }
 
@@ -502,7 +542,7 @@ export function generateTransactions(accounts: Account[]): Transaction[] {
 
   accounts.forEach((account) => {
     const templates = ACCOUNT_TX_TEMPLATES[account.id] ?? [
-      { description: 'Transaction', type: 'inflow' as const, sign: 1 as const },
+      { description: 'Transaction', type: 'inflow' as const, sign: 1 as const, category: 'other' as const },
     ]
 
     // ~3-5 transactions per account per month over 24 months (back to March 2024)
@@ -544,6 +584,7 @@ export function generateTransactions(accounts: Account[]): Transaction[] {
           amount,
           currency: account.currency,
           type: template.type,
+          category: template.category,
           timestamp: date,
         })
       }
