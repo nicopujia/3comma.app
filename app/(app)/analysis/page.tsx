@@ -18,7 +18,7 @@ import {
 import { ChevronRight, X } from 'lucide-react'
 import Link from 'next/link'
 import { useAppStore, SavedChart } from '@/lib/store'
-import { getHistoricalData, getAIExplanation, Transaction, toUSD } from '@/lib/mock-data'
+import { getHistoricalData, Transaction, toUSD } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
 
 const RANGES = ['1W', '1M', '3M', '6M', '1Y', 'ALL'] as const
@@ -110,45 +110,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   )
 }
 
-// TypewriterText: reveals text character-by-character.
-// The invisible ghost span locks the container height from the start,
-// preventing layout reflow while the overlay animates.
-// Uses only <span> elements so it is valid inside any parent.
-function TypewriterText({ text, speed = 10 }: { text: string; speed?: number }) {
-  const [count, setCount] = useState(0)
-  const [done, setDone] = useState(false)
 
-  useEffect(() => {
-    setCount(0)
-    setDone(false)
-    if (!text) return
-    let i = 0
-    const id = setInterval(() => {
-      i++
-      setCount(i)
-      if (i >= text.length) {
-        clearInterval(id)
-        setDone(true)
-      }
-    }, speed)
-    return () => clearInterval(id)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text])
-
-  return (
-    <span className="relative block">
-      {/* invisible full text holds the correct container height */}
-      <span aria-hidden className="invisible select-none">{text}</span>
-      {/* revealed text overlaid — does not affect layout */}
-      <span className="absolute inset-0">
-        {text.slice(0, count)}
-        {!done && (
-          <span className="ml-px inline-block h-3.5 w-0.5 animate-pulse bg-foreground/60 align-middle" />
-        )}
-      </span>
-    </span>
-  )
-}
 
 const CHART_COLORS = [
   '#18181b', '#52525b', '#a1a1aa', '#d4d4d8',
@@ -242,7 +204,7 @@ export default function AnalysisPage() {
   const minValue = Math.min(...chartData.map((d) => d.value)) * 0.97
   const maxValue = Math.max(...chartData.map((d) => d.value)) * 1.02
 
-  const aiText = useMemo(() => getAIExplanation(range, total), [range, total])
+
 
   const xTicks = useMemo(() => {
     const tickCount = range === '1W' ? 7 : range === '1M' ? 5 : 4
@@ -507,18 +469,6 @@ export default function AnalysisPage() {
         </Link>
       </div>
 
-      {/* Analysis */}
-      {!activeChart && (<>
-      <div className="mx-6 h-px bg-border" />
-      <div className="flex flex-col gap-3 px-6 pb-4 pt-5">
-        <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-          Analysis
-        </span>
-        <span className="text-pretty text-sm leading-relaxed text-foreground">
-          <TypewriterText text={aiText} speed={10} />
-        </span>
-      </div>
-      </>)}
     </div>
   )
 }
