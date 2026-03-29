@@ -249,10 +249,10 @@ export default function AnalysisPage() {
             <button
               onClick={() => setActiveTab('net-worth')}
               className={cn(
-                'shrink-0 cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-all',
+                'shrink-0 cursor-pointer rounded-xl px-3 py-2 text-[11px] font-semibold transition-all',
                 activeTab === 'net-worth'
-                  ? 'bg-foreground text-background'
-                  : 'bg-card text-muted-foreground ring-1 ring-border hover:bg-muted'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'bg-muted text-muted-foreground hover:text-foreground'
               )}
             >
               Net worth
@@ -262,10 +262,10 @@ export default function AnalysisPage() {
                 <button
                   onClick={() => setActiveTab(chart.id)}
                   className={cn(
-                    'cursor-pointer rounded-full px-3 py-1.5 pr-7 text-xs font-medium transition-all',
+                    'cursor-pointer rounded-xl px-3 py-2 pr-7 text-[11px] font-semibold transition-all',
                     activeTab === chart.id
-                      ? 'bg-foreground text-background'
-                      : 'bg-card text-muted-foreground ring-1 ring-border hover:bg-muted'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'bg-muted text-muted-foreground hover:text-foreground'
                   )}
                 >
                   {chart.label}
@@ -277,9 +277,9 @@ export default function AnalysisPage() {
                     deleteSavedChart(chart.id)
                   }}
                   className={cn(
-                    'absolute right-1 top-1/2 -translate-y-1/2 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full transition-colors',
+                    'absolute right-1.5 top-1/2 -translate-y-1/2 flex h-4 w-4 cursor-pointer items-center justify-center rounded-full transition-colors',
                     activeTab === chart.id
-                      ? 'text-background/60 hover:text-background'
+                      ? 'text-foreground/60 hover:text-foreground'
                       : 'text-muted-foreground/40 hover:text-muted-foreground'
                   )}
                   aria-label={`Delete ${chart.label}`}
@@ -297,21 +297,23 @@ export default function AnalysisPage() {
       ) : (
         <>
           {/* Range selector */}
-          <div className="flex items-center px-4 pb-6">
-            {RANGES.map((r) => (
-              <button
-                key={r}
-                onClick={() => setRange(r)}
-                className={cn(
-                  'flex-1 cursor-pointer rounded-xl py-2 text-xs font-semibold transition-all',
-                  range === r
-                    ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground active:bg-muted'
-                )}
-              >
-                {r}
-              </button>
-            ))}
+          <div className="px-4 pb-6">
+            <div className="flex items-center gap-1 rounded-2xl bg-muted p-1">
+              {RANGES.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setRange(r)}
+                  className={cn(
+                    'flex-1 cursor-pointer rounded-xl py-2 text-[11px] font-semibold transition-all',
+                    range === r
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Chart */}
