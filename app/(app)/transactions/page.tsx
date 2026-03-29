@@ -235,25 +235,6 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <div className="border-b border-border px-4 py-4">
-        <div className="flex items-center gap-1 rounded-2xl bg-muted p-1">
-          {RANGES.map((r) => (
-            <button
-              key={r}
-              onClick={() => setRange(r)}
-              className={cn(
-                'flex-1 cursor-pointer rounded-xl py-2 text-[11px] font-semibold transition-all',
-                range === r
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Results count */}
       <div className="px-6 py-3">
         <span className="text-xs text-muted-foreground tabular-nums">{filteredTxs.length} transaction{filteredTxs.length !== 1 ? 's' : ''}</span>
@@ -320,6 +301,27 @@ export default function TransactionsPage() {
           </SheetHeader>
 
           <div className="flex flex-col gap-6 px-6 pb-6">
+            {/* Time period */}
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Time period</p>
+              <div className="flex items-center gap-1 rounded-2xl bg-muted p-1">
+                {RANGES.map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setRange(r)}
+                    className={cn(
+                      'flex-1 cursor-pointer rounded-xl py-2 text-[11px] font-semibold transition-all',
+                      range === r
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Amount range */}
             <div className="flex flex-col gap-2">
               <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Amount (USD)</p>
