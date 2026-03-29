@@ -5,6 +5,7 @@ import { persist } from 'zustand/middleware'
 import {
   Account,
   ALL_ACCOUNTS,
+  DEFAULT_ACCOUNT_IDS,
   toUSD,
   Transaction,
   generateTransactions,
@@ -51,7 +52,7 @@ export const useAppStore = create<AppStore>()(
   persist(
     (set, get) => ({
       onboardingComplete: false,
-      selectedAccountIds: ALL_ACCOUNTS.map((a) => a.id),
+      selectedAccountIds: DEFAULT_ACCOUNT_IDS,
       accounts: [],
       transactions: [],
       savedCharts: [],
@@ -70,7 +71,7 @@ export const useAppStore = create<AppStore>()(
       resetOnboarding: () =>
         set({
           onboardingComplete: false,
-          selectedAccountIds: ALL_ACCOUNTS.map((a) => a.id),
+          selectedAccountIds: DEFAULT_ACCOUNT_IDS,
           accounts: [],
           transactions: [],
         }),
