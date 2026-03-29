@@ -12,7 +12,7 @@ import {
 } from './mock-data'
 
 // Bump this when mock data generation changes to force regeneration
-const TX_DATA_VERSION = 3
+const TX_DATA_VERSION = 4
 const CASH_ACCOUNT_ID = 'manual-cash'
 const CASH_ACCOUNT_NAME = 'Cash'
 
@@ -147,6 +147,7 @@ export const useAppStore = create<AppStore>()(
             amount,
             currency: 'USD',
             type: amount > 0 ? 'inflow' : 'outflow',
+            category: 'other',
             timestamp: new Date(),
           }
           const cashAccount = state.accounts.find((a) => a.id === CASH_ACCOUNT_ID)
