@@ -213,7 +213,7 @@ function stripThinking(text: string): string {
 /** Split already-cleaned text into segments of plain text and chart specs */
 function parseCharts(text: string): Array<{ type: 'text'; content: string } | { type: 'chart'; spec: ChartSpec }> {
   const parts: Array<{ type: 'text'; content: string } | { type: 'chart'; spec: ChartSpec }> = []
-  const regex = /```chart\s*\n([\s\S]*?)```/g
+  const regex = /```chart\s*\n?([\s\S]*?)```|<chart>\s*([\s\S]*?)\s*<\/chart>/g
   let last = 0
   let match: RegExpExecArray | null
 
@@ -222,7 +222,8 @@ function parseCharts(text: string): Array<{ type: 'text'; content: string } | { 
       parts.push({ type: 'text', content: text.slice(last, match.index) })
     }
     try {
-      const spec = JSON.parse(match[1]) as ChartSpec
+      const json = match[1] ?? match[2]
+      const spec = JSON.parse(json) as ChartSpec
       if (spec.data && Array.isArray(spec.data)) {
         parts.push({ type: 'chart', spec })
       }
