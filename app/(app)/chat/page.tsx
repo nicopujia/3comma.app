@@ -275,17 +275,38 @@ function buildContext(
     })
     .join('\n')
 
-  // Spending by category (description)
+  // Spending by category
   const categorySpend: Record<string, number> = {}
   transactions.forEach((tx) => {
     if (tx.type !== 'outflow') return
     const usd = tx.currency === 'ARS' ? Math.abs(tx.amount) / FX_ARS_USD : Math.abs(tx.amount)
-    categorySpend[tx.description] = (categorySpend[tx.description] ?? 0) + usd
+    const cat = tx.category ?? 'other'
+    categorySpend[cat] = (categorySpend[cat] ?? 0) + usd
   })
   const categoryLines = Object.entries(categorySpend)
     .sort(([, a], [, b]) => b - a)
-    .slice(0, 15)
-    .map(([desc, total]) => `- ${desc}: $${total.toFixed(0)}`)
+    .map(([cat, total]) => `- ${cat}: $${total.toFixed(0)}`)
+    .join('\n')
+
+  // Monthly spending by category
+  const monthlyCategorySpend: Record<string, Record<string, number>> = {}
+  transactions.forEach((tx) => {
+    if (tx.type !== 'outflow') return
+    const month = `${tx.timestamp.getFullYear()}-${String(tx.timestamp.getMonth() + 1).padStart(2, '0')}`
+    const cat = tx.category ?? 'other'
+    if (!monthlyCategorySpend[month]) monthlyCategorySpend[month] = {}
+    const usd = tx.currency === 'ARS' ? Math.abs(tx.amount) / FX_ARS_USD : Math.abs(tx.amount)
+    monthlyCategorySpend[month][cat] = (monthlyCategorySpend[month][cat] ?? 0) + usd
+  })
+  const monthlyCategoryLines = Object.entries(monthlyCategorySpend)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, cats]) => {
+      const lines = Object.entries(cats)
+        .sort(([, a], [, b]) => b - a)
+        .map(([cat, total]) => `    ${cat}: $${total.toFixed(0)}`)
+        .join('\n')
+      return `  ${month}:\n${lines}`
+    })
     .join('\n')
 
   // Monthly totals
@@ -311,7 +332,7 @@ function buildContext(
     .slice(0, 30)
     .map((tx) => {
       const sign = tx.amount > 0 ? '+' : ''
-      return `- [${tx.timestamp.toLocaleDateString()}] ${tx.accountName}: ${sign}$${Math.abs(tx.amount).toFixed(2)} — ${tx.description} (${tx.type})`
+      return `- [${tx.timestamp.toLocaleDateString()}] ${tx.accountName}: ${sign}$${Math.abs(tx.amount).toFixed(2)} — ${tx.description} [${tx.category ?? 'other'}] (${tx.type})`
     })
     .join('\n')
 
@@ -328,6 +349,9 @@ ${categoryLines}
 
 Per-account monthly breakdown (USD):
 ${acctMonthlyLines}
+
+Monthly spending by category (USD):
+${monthlyCategoryLines}
 
 Recent transactions (last 30):
 ${recentTxs}`
