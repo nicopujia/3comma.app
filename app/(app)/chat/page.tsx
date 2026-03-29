@@ -340,6 +340,7 @@ const SUGGESTED = [
 ]
 
 const CHAT_STORAGE_KEY = '3comma-chat'
+const DRAFT_STORAGE_KEY = '3comma-chat-draft'
 
 function loadPersistedMessages(): UIMessage[] {
   if (typeof window === 'undefined') return []
@@ -390,7 +391,10 @@ export default function ChatPage() {
   const contextRef = useRef('')
   contextRef.current = buildContext(accounts, transactions)
 
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    return localStorage.getItem(DRAFT_STORAGE_KEY) ?? ''
+  })
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const composerRef = useRef<HTMLDivElement>(null)
@@ -467,6 +471,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     resizeInput()
+    try { localStorage.setItem(DRAFT_STORAGE_KEY, input) } catch {}
   }, [input, resizeInput])
 
   useEffect(() => {
@@ -487,6 +492,7 @@ export default function ChatPage() {
     if (!text || isLoading) return
     sendMessage({ text })
     setInput('')
+    try { localStorage.removeItem(DRAFT_STORAGE_KEY) } catch {}
     requestAnimationFrame(() => resizeInput())
     inputRef.current?.focus()
   }

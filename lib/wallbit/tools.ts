@@ -32,12 +32,15 @@ const getWallbitTransactions = tool({
     limit: z.number().optional().describe('Results per page (10, 20, or 50)'),
     status: z.string().optional().describe('Filter by status, e.g. COMPLETED'),
     currency: z.string().optional().describe('Filter by currency code, e.g. USD'),
-    from_date: z.string().optional().describe('Start date (YYYY-MM-DD)'),
-    to_date: z.string().optional().describe('End date (YYYY-MM-DD)'),
+    from_date: z.string().optional().describe('Start date (YYYY-MM-DD). Must not be in the future.'),
+    to_date: z.string().optional().describe('End date (YYYY-MM-DD). Must not be in the future. Defaults to today.'),
     from_amount: z.number().optional().describe('Minimum amount'),
     to_amount: z.number().optional().describe('Maximum amount'),
   }),
   execute: async (input) => {
+    const today = new Date().toISOString().split('T')[0]
+    if (input.to_date && input.to_date > today) input.to_date = today
+    if (input.from_date && input.from_date > today) input.from_date = today
     const result = await wallbit.getTransactions(input)
     return result
   },
