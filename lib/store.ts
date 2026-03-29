@@ -80,7 +80,7 @@ export const useAppStore = create<AppStore>()(
         }),
 
       logout: () => {
-        localStorage.removeItem('3comma-store')
+        localStorage.clear()
         set({
           onboardingComplete: false,
           selectedAccountIds: DEFAULT_ACCOUNT_IDS,
