@@ -1,96 +1,114 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import NumberFlow from '@number-flow/react'
-import { Eye, EyeOff, ExternalLink, ChevronDown, ChevronUp, Plus, DollarSign } from 'lucide-react'
-import { useAppStore } from '@/lib/store'
-import { toUSD } from '@/lib/mock-data'
-import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
+import { useState } from "react";
+import NumberFlow from "@number-flow/react";
+import {
+  Eye,
+  EyeOff,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  DollarSign,
+} from "lucide-react";
+import { useAppStore } from "@/lib/store";
+import { toUSD } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 const ACCOUNT_TYPE_LABEL: Record<string, string> = {
-  bank: 'Bank',
-  crypto: 'Crypto',
-  investment: 'Investment',
-  cash: 'Cash',
-}
+  bank: "Bank",
+  crypto: "Crypto",
+  investment: "Investment",
+  cash: "Cash",
+};
 
 function formatBalance(amount: number, currency: string): string {
-  if (currency === 'ARS') {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS',
+  if (currency === "ARS") {
+    return new Intl.NumberFormat("es-AR", {
+      style: "currency",
+      currency: "ARS",
       maximumFractionDigits: 0,
-    }).format(amount)
+    }).format(amount);
   }
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount)
+  }).format(amount);
 }
 
 function formatPercent(value: number): string {
-  return value.toFixed(1) + '%'
+  return value.toFixed(1) + "%";
 }
 
 function CashDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const accounts = useAppStore((s) => s.accounts)
-  const setCashBalance = useAppStore((s) => s.setCashBalance)
-  const addCashTransaction = useAppStore((s) => s.addCashTransaction)
+  const accounts = useAppStore((s) => s.accounts);
+  const setCashBalance = useAppStore((s) => s.setCashBalance);
+  const addCashTransaction = useAppStore((s) => s.addCashTransaction);
 
-  const cashAccount = accounts.find((a) => a.id === 'manual-cash')
-  const currentBalance = cashAccount?.balance ?? 0
+  const cashAccount = accounts.find((a) => a.id === "manual-cash");
+  const currentBalance = cashAccount?.balance ?? 0;
 
-  const [setAmount, setSetAmount] = useState(String(currentBalance))
-  const [txDescription, setTxDescription] = useState('')
-  const [txAmount, setTxAmount] = useState('')
+  const [setAmount, setSetAmount] = useState(String(currentBalance));
+  const [txDescription, setTxDescription] = useState("");
+  const [txAmount, setTxAmount] = useState("");
 
   const handleSetBalance = () => {
-    const val = parseFloat(setAmount)
-    if (isNaN(val) || val < 0) return
-    setCashBalance(val)
-    toast('Cash balance updated')
-    onClose()
-  }
+    const val = parseFloat(setAmount);
+    if (isNaN(val) || val < 0) return;
+    setCashBalance(val);
+    toast("Cash balance updated");
+    onClose();
+  };
 
   const handleAddTransaction = (sign: 1 | -1) => {
-    const val = parseFloat(txAmount)
-    if (isNaN(val) || val <= 0) return
-    addCashTransaction(txDescription, sign * val)
-    toast(sign > 0 ? `+$${val.toFixed(2)} added` : `-$${val.toFixed(2)} recorded`)
-    onClose()
-  }
+    const val = parseFloat(txAmount);
+    if (isNaN(val) || val <= 0) return;
+    addCashTransaction(txDescription, sign * val);
+    toast(
+      sign > 0 ? `+$${val.toFixed(2)} added` : `-$${val.toFixed(2)} recorded`,
+    );
+    onClose();
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-sm rounded-2xl">
         <DialogHeader>
           <DialogTitle className="text-base font-semibold">Cash</DialogTitle>
-          <DialogDescription>Add a transaction or set your current cash balance</DialogDescription>
+          <DialogDescription>
+            Add a transaction or set your current cash balance
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="transaction" className="w-full">
           <TabsList className="w-full">
-            <TabsTrigger value="transaction" className="flex-1 cursor-pointer">Add transaction</TabsTrigger>
-            <TabsTrigger value="set" className="flex-1 cursor-pointer">Set balance</TabsTrigger>
+            <TabsTrigger value="transaction" className="flex-1 cursor-pointer">
+              Add transaction
+            </TabsTrigger>
+            <TabsTrigger value="set" className="flex-1 cursor-pointer">
+              Set balance
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="transaction" className="flex flex-col gap-4 pt-4">
             <div className="flex flex-col gap-1.5">
-              <Label className="text-xs text-muted-foreground">Description (optional)</Label>
+              <Label className="text-xs text-muted-foreground">
+                Description (optional)
+              </Label>
               <Input
                 placeholder="e.g. Coffee, lunch, ATM"
                 value={txDescription}
@@ -99,7 +117,9 @@ function CashDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label className="text-xs text-muted-foreground">Amount (USD)</Label>
+              <Label className="text-xs text-muted-foreground">
+                Amount (USD)
+              </Label>
               <Input
                 type="number"
                 min="0"
@@ -131,7 +151,7 @@ function CashDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
           <TabsContent value="set" className="flex flex-col gap-4 pt-4">
             <div className="flex flex-col gap-1.5">
               <Label className="text-xs text-muted-foreground">
-                Current balance: {formatBalance(currentBalance, 'USD')}
+                Current balance: {formatBalance(currentBalance, "USD")}
               </Label>
               <Input
                 type="number"
@@ -153,79 +173,67 @@ function CashDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
         </Tabs>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 export default function HomePage() {
-  const accounts = useAppStore((s) => s.accounts)
-  const toggleIncluded = useAppStore((s) => s.toggleIncluded)
-  const totalLiquidityUSD = useAppStore((s) => s.totalLiquidityUSD)
-  const [accountsOpen, setAccountsOpen] = useState(true)
-  const [cashDialogOpen, setCashDialogOpen] = useState(false)
+  const accounts = useAppStore((s) => s.accounts);
+  const toggleIncluded = useAppStore((s) => s.toggleIncluded);
+  const totalLiquidityUSD = useAppStore((s) => s.totalLiquidityUSD);
+  const [accountsOpen, setAccountsOpen] = useState(true);
+  const [cashDialogOpen, setCashDialogOpen] = useState(false);
 
-  const total = totalLiquidityUSD()
+  const total = totalLiquidityUSD();
 
   const handleAccountTap = (account: (typeof accounts)[0]) => {
-    if (account.id === 'manual-cash') {
-      setCashDialogOpen(true)
-      return
+    if (account.id === "manual-cash") {
+      setCashDialogOpen(true);
+      return;
     }
     if (account.deepLink) {
-      toast(`Opening ${account.name}...`, { duration: 2000 })
-      setTimeout(() => window.open(account.deepLink, '_blank', 'noopener,noreferrer'), 300)
+      toast(`Opening ${account.name}...`, { duration: 2000 });
+      setTimeout(
+        () => window.open(account.deepLink, "_blank", "noopener,noreferrer"),
+        300,
+      );
     }
-  }
+  };
 
   const handleToggle = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation()
-    toggleIncluded(id)
-  }
+    e.stopPropagation();
+    toggleIncluded(id);
+  };
 
   const includedTotal = accounts
     .filter((a) => a.included)
-    .reduce((sum, a) => sum + toUSD(a.balance, a.currency), 0)
+    .reduce((sum, a) => sum + toUSD(a.balance, a.currency), 0);
 
   return (
     <div className="flex h-full min-h-0 max-h-full flex-col overflow-hidden">
       {/* Hero — always visible */}
       <div className="shrink-0 flex min-h-[26vh] flex-col justify-center gap-1 px-6">
         <div className="flex items-end gap-0">
-          <span className="mt-1 self-start pt-3 text-3xl font-light text-muted-foreground">$</span>
+          <span className="mt-1 self-start pt-3 text-3xl font-light text-muted-foreground">
+            $
+          </span>
           <NumberFlow
             value={Math.round(total)}
-            format={{ notation: 'standard', maximumFractionDigits: 0 }}
+            format={{ notation: "standard", maximumFractionDigits: 0 }}
             className="text-[3.5rem] font-bold leading-none tracking-tight text-foreground tabular-nums"
           />
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="mx-6 shrink-0 h-px bg-border" />
-
       {/* Collapsible accounts section — scrolls independently */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <button
-          onClick={() => setAccountsOpen((v) => !v)}
-          className="shrink-0 flex cursor-pointer items-center justify-between px-6 py-4 transition-colors hover:bg-muted/50"
-        >
-          <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-            View breakdown
-          </span>
-          {accountsOpen ? (
-            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          )}
-        </button>
-
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-border">
         {accountsOpen && (
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain animate-in slide-in-from-top-2 fade-in-0 duration-200">
             {accounts.map((account, i) => {
-              const usdValue = toUSD(account.balance, account.currency)
+              const usdValue = toUSD(account.balance, account.currency);
               const percent =
                 includedTotal > 0 && account.included
                   ? (usdValue / includedTotal) * 100
-                  : 0
+                  : 0;
 
               return (
                 <div
@@ -233,18 +241,22 @@ export default function HomePage() {
                   role="button"
                   tabIndex={0}
                   onClick={() => handleAccountTap(account)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAccountTap(account)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && handleAccountTap(account)
+                  }
                   className={cn(
-                    'flex cursor-pointer items-center gap-4 px-6 py-4 transition-colors hover:bg-muted/50 active:bg-muted',
-                    i !== accounts.length - 1 && 'border-b border-border'
+                    "flex cursor-pointer items-center gap-4 px-6 py-4 transition-colors hover:bg-muted/50 active:bg-muted",
+                    i !== accounts.length - 1 && "border-b border-border",
                   )}
                 >
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <div className="flex items-center gap-2">
                       <span
                         className={cn(
-                          'text-sm font-medium transition-colors',
-                          account.included ? 'text-foreground' : 'text-muted-foreground'
+                          "text-sm font-medium transition-colors",
+                          account.included
+                            ? "text-foreground"
+                            : "text-muted-foreground",
                         )}
                       >
                         {account.name}
@@ -256,16 +268,24 @@ export default function HomePage() {
                     <div className="flex items-center gap-2">
                       <span
                         className={cn(
-                          'tabular-nums text-xs transition-colors',
-                          account.included ? 'text-muted-foreground' : 'text-muted-foreground/50'
+                          "tabular-nums text-xs transition-colors",
+                          account.included
+                            ? "text-muted-foreground"
+                            : "text-muted-foreground/50",
                         )}
                       >
-                        {new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(account.balance)}
-                        <span className="ml-0.5 text-[10px] uppercase">{account.currency.toLowerCase()}</span>
+                        {new Intl.NumberFormat("en-US", {
+                          maximumFractionDigits: 0,
+                        }).format(account.balance)}
+                        <span className="ml-0.5 text-[10px] uppercase">
+                          {account.currency.toLowerCase()}
+                        </span>
                       </span>
                       {account.included && percent > 0 && (
                         <>
-                          <span className="text-xs text-muted-foreground/30">·</span>
+                          <span className="text-xs text-muted-foreground/30">
+                            ·
+                          </span>
                           <span className="tabular-nums text-xs text-muted-foreground/70">
                             {formatPercent(percent)}
                           </span>
@@ -275,12 +295,16 @@ export default function HomePage() {
                   </div>
 
                   <div className="flex shrink-0 items-center gap-3">
-                    {account.deepLink && account.id !== 'manual-cash' && (
+                    {account.deepLink && account.id !== "manual-cash" && (
                       <ExternalLink className="h-3.5 w-3.5 text-muted-foreground/30" />
                     )}
                     <button
                       onClick={(e) => handleToggle(e, account.id)}
-                      aria-label={account.included ? 'Exclude from total' : 'Include in total'}
+                      aria-label={
+                        account.included
+                          ? "Exclude from total"
+                          : "Include in total"
+                      }
                       className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-muted active:bg-muted"
                     >
                       {account.included ? (
@@ -291,13 +315,16 @@ export default function HomePage() {
                     </button>
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         )}
       </div>
 
-      <CashDialog open={cashDialogOpen} onClose={() => setCashDialogOpen(false)} />
+      <CashDialog
+        open={cashDialogOpen}
+        onClose={() => setCashDialogOpen(false)}
+      />
     </div>
-  )
+  );
 }
