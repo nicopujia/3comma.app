@@ -12,7 +12,7 @@ import {
 } from './mock-data'
 
 // Bump this when mock data generation changes to force regeneration
-const TX_DATA_VERSION = 2
+const TX_DATA_VERSION = 3
 const CASH_ACCOUNT_ID = 'manual-cash'
 const CASH_ACCOUNT_NAME = 'Cash'
 

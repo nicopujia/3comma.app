@@ -522,7 +522,14 @@ export function generateTransactions(accounts: Account[]): Transaction[] {
           0
         )
 
-        const template = templates[Math.floor(rand() * templates.length)]
+        // Bias toward inflows (~60%) for a healthier-looking portfolio
+        const inflowTemplates = templates.filter((t) => t.type === 'inflow')
+        const outflowTemplates = templates.filter((t) => t.type === 'outflow')
+        const template = rand() < 0.6 && inflowTemplates.length > 0
+          ? inflowTemplates[Math.floor(rand() * inflowTemplates.length)]
+          : outflowTemplates.length > 0
+            ? outflowTemplates[Math.floor(rand() * outflowTemplates.length)]
+            : templates[Math.floor(rand() * templates.length)]
         const baseAmount =
           account.currency === 'ARS'
             ? Math.floor(rand() * 500_000) + 5_000

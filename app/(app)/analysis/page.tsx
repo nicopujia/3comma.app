@@ -15,7 +15,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts'
-import { ChevronRight, X } from 'lucide-react'
+import { ChevronRight, MessageSquare, X } from 'lucide-react'
 import Link from 'next/link'
 import { useAppStore, SavedChart } from '@/lib/store'
 import { getHistoricalData, Transaction, toUSD } from '@/lib/mock-data'
@@ -174,7 +174,7 @@ function SavedChartView({ chart }: { chart: SavedChart }) {
 
 export default function AnalysisPage() {
   const [range, setRange] = useState<Range>('1M')
-  const [activeTab, setActiveTab] = useState<string>('net-worth')
+  const [activeTab, setActiveTab] = useState<'net-worth' | 'saved'>('net-worth')
   const accounts = useAppStore((s) => s.accounts)
   const transactions = useAppStore((s) => s.transactions)
   const savedCharts = useAppStore((s) => s.savedCharts)
@@ -182,8 +182,6 @@ export default function AnalysisPage() {
   const totalLiquidityUSD = useAppStore((s) => s.totalLiquidityUSD)
   const total = totalLiquidityUSD()
   const rangeStart = useMemo(() => getRangeStart(range), [range])
-  const activeChart = savedCharts.find((c) => c.id === activeTab)
-
   const historicalData = useMemo(
     () => getHistoricalData(accounts, range, transactions),
     [accounts, range, transactions]
@@ -235,65 +233,57 @@ export default function AnalysisPage() {
   const moneyDiff = moneyIn - moneyOut
 
   return (
-    <div className="flex flex-col pb-24 pt-12">
-      {/* Chart tabs — horizontal scroll */}
-      {savedCharts.length > 0 && (
-        <div className="mb-2">
-          <div
-            className="no-scrollbar flex items-center gap-2 overflow-x-auto px-4 py-1"
-            style={{
-              maskImage: 'linear-gradient(to right, transparent, black 1rem, black calc(100% - 1rem), transparent)',
-              WebkitMaskImage: 'linear-gradient(to right, transparent, black 1rem, black calc(100% - 1rem), transparent)',
-            }}
-          >
+    <div className="flex flex-col pb-24 pt-6">
+      {/* Fixed tabs */}
+      <div className="mb-4 px-4">
+        <div className="flex items-center gap-1 rounded-2xl bg-muted p-1">
+          {(['net-worth', 'saved'] as const).map((tab) => (
             <button
-              onClick={() => setActiveTab('net-worth')}
+              key={tab}
+              onClick={() => setActiveTab(tab)}
               className={cn(
-                'shrink-0 cursor-pointer rounded-xl px-3 py-2 text-[11px] font-semibold transition-all',
-                activeTab === 'net-worth'
+                'flex-1 cursor-pointer rounded-xl py-2 text-[11px] font-semibold transition-all',
+                activeTab === tab
                   ? 'bg-background text-foreground shadow-sm'
-                  : 'bg-muted text-muted-foreground hover:text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              Net worth
+              {tab === 'net-worth' ? 'Net worth' : 'Saved graphs'}
             </button>
+          ))}
+        </div>
+      </div>
+
+      {activeTab === 'saved' ? (
+        savedCharts.length === 0 ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 py-20 text-center">
+            <MessageSquare className="h-8 w-8 text-muted-foreground/30" />
+            <p className="text-sm text-muted-foreground">
+              Nothing here yet. Save a graph from the chat to see it here.
+            </p>
+            <Link
+              href="/chat"
+              className="text-xs font-medium text-foreground underline underline-offset-2"
+            >
+              Go to chat
+            </Link>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-6 px-2">
             {savedCharts.map((chart) => (
-              <div key={chart.id} className="group relative shrink-0">
+              <div key={chart.id} className="relative">
                 <button
-                  onClick={() => setActiveTab(chart.id)}
-                  className={cn(
-                    'cursor-pointer rounded-xl px-3 py-2 pr-7 text-[11px] font-semibold transition-all',
-                    activeTab === chart.id
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'bg-muted text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  {chart.label}
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (activeTab === chart.id) setActiveTab('net-worth')
-                    deleteSavedChart(chart.id)
-                  }}
-                  className={cn(
-                    'absolute right-1.5 top-1/2 -translate-y-1/2 flex h-4 w-4 cursor-pointer items-center justify-center rounded-full transition-colors',
-                    activeTab === chart.id
-                      ? 'text-foreground/60 hover:text-foreground'
-                      : 'text-muted-foreground/40 hover:text-muted-foreground'
-                  )}
+                  onClick={() => deleteSavedChart(chart.id)}
+                  className="absolute right-4 top-4 z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
                   aria-label={`Delete ${chart.label}`}
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-3.5 w-3.5" />
                 </button>
+                <SavedChartView chart={chart} />
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {activeChart ? (
-        <SavedChartView chart={activeChart} />
+        )
       ) : (
         <>
           {/* Range selector */}
