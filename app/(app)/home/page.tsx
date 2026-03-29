@@ -10,6 +10,8 @@ import {
   ChevronUp,
   Plus,
   DollarSign,
+  Settings,
+  PencilLine,
 } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { toUSD } from "@/lib/mock-data";
@@ -26,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const ACCOUNT_TYPE_LABEL: Record<string, string> = {
   bank: "Bank",
@@ -51,7 +54,7 @@ function formatBalance(amount: number, currency: string): string {
 }
 
 function formatPercent(value: number): string {
-  return value.toFixed(1) + "%";
+  return (value.toFixed(1) + "%").padStart(5, "0");
 }
 
 function CashDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -209,7 +212,7 @@ export default function HomePage() {
     .reduce((sum, a) => sum + toUSD(a.balance, a.currency), 0);
 
   return (
-    <div className="flex h-full min-h-0 max-h-full flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 max-h-full flex-col overflow-hidden relative">
       {/* Hero — always visible */}
       <div className="shrink-0 flex min-h-[26vh] flex-col justify-center gap-1 px-6">
         <div className="flex items-end gap-0">
@@ -222,6 +225,12 @@ export default function HomePage() {
             className="text-[3.5rem] font-bold leading-none tracking-tight text-foreground tabular-nums"
           />
         </div>
+        <Link
+          href="/settings"
+          className="absolute right-4 top-4 text-muted-foreground/50 hover:text-foreground duration-300"
+        >
+          <Settings className="size-4" />
+        </Link>
       </div>
 
       {/* Collapsible accounts section — scrolls independently */}
@@ -266,6 +275,16 @@ export default function HomePage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
+                      {account.included && percent > 0 && (
+                        <>
+                          <span className="tabular-nums text-xs text-muted-foreground">
+                            {formatPercent(percent)}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            ·
+                          </span>
+                        </>
+                      )}
                       <span
                         className={cn(
                           "tabular-nums text-xs transition-colors",
@@ -274,6 +293,7 @@ export default function HomePage() {
                             : "text-muted-foreground/50",
                         )}
                       >
+                        $
                         {new Intl.NumberFormat("en-US", {
                           maximumFractionDigits: 0,
                         }).format(account.balance)}
@@ -281,22 +301,14 @@ export default function HomePage() {
                           {account.currency.toLowerCase()}
                         </span>
                       </span>
-                      {account.included && percent > 0 && (
-                        <>
-                          <span className="text-xs text-muted-foreground/30">
-                            ·
-                          </span>
-                          <span className="tabular-nums text-xs text-muted-foreground/70">
-                            {formatPercent(percent)}
-                          </span>
-                        </>
-                      )}
                     </div>
                   </div>
 
                   <div className="flex shrink-0 items-center gap-3">
-                    {account.deepLink && account.id !== "manual-cash" && (
-                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground/30" />
+                    {account.deepLink && account.id !== "cash" ? (
+                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                    ) : (
+                      <PencilLine className="h-3.5 w-3.5 text-muted-foreground" />
                     )}
                     <button
                       onClick={(e) => handleToggle(e, account.id)}
@@ -310,7 +322,7 @@ export default function HomePage() {
                       {account.included ? (
                         <Eye className="h-5 w-5 text-foreground" />
                       ) : (
-                        <EyeOff className="h-5 w-5 text-muted-foreground/40" />
+                        <EyeOff className="h-5 w-5 text-muted-foreground" />
                       )}
                     </button>
                   </div>
