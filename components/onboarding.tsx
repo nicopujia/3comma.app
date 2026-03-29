@@ -1,18 +1,19 @@
 'use client'
 
-import { useState } from 'react'
-import { ALL_ACCOUNTS } from '@/lib/mock-data'
+import { useMemo, useState } from 'react'
+import { ALL_ACCOUNTS, DEFAULT_ACCOUNT_IDS } from '@/lib/mock-data'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
-import { Check, ChevronLeft } from 'lucide-react'
+import { Check, ChevronLeft, Search } from 'lucide-react'
 
 type Step = 0 | 1 | 2 | 3
 
 export function Onboarding() {
   const [step, setStep] = useState<Step>(0)
   const [selected, setSelected] = useState<Set<string>>(
-    new Set(ALL_ACCOUNTS.map((a) => a.id))
+    new Set(DEFAULT_ACCOUNT_IDS)
   )
+  const [search, setSearch] = useState('')
   const [plan, setPlan] = useState<'monthly' | 'yearly'>('yearly')
   const [loading, setLoading] = useState(false)
   const completeOnboarding = useAppStore((s) => s.completeOnboarding)
@@ -36,10 +37,20 @@ export function Onboarding() {
     }, 1800)
   }
 
+  const filteredAccounts = useMemo(
+    () =>
+      search.trim() === ''
+        ? ALL_ACCOUNTS
+        : ALL_ACCOUNTS.filter((a) =>
+            a.name.toLowerCase().includes(search.toLowerCase())
+          ),
+    [search]
+  )
+
   const canGoBack = step > 0 && step < 3 && !loading
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background font-sans">
+    <div className="flex h-dvh flex-col bg-background font-sans">
       {/* Header with back button + step indicator */}
       <div className="flex items-center justify-between px-4 pt-14">
         <button
@@ -71,7 +82,7 @@ export function Onboarding() {
         <div className="h-9 w-9" />
       </div>
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
         {/* Step 0 — Welcome */}
         {step === 0 && (
           <div className="flex flex-1 flex-col justify-between px-6 pb-12 pt-12">
@@ -94,18 +105,32 @@ export function Onboarding() {
 
         {/* Step 1 — Account selection */}
         {step === 1 && (
-          <div className="flex flex-1 flex-col justify-between px-6 pb-12 pt-10">
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col gap-2">
-                <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-                  Select your accounts
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Choose which ones to track. You can change this anytime.
-                </p>
-              </div>
-              <div className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl bg-card">
-                {ALL_ACCOUNTS.map((account) => {
+          <div className="flex min-h-0 flex-1 flex-col px-6 pb-12 pt-10">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                Select your accounts
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Choose which ones to track. You can change this anytime.
+              </p>
+            </div>
+
+            {/* Search */}
+            <div className="relative mt-6">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search accounts..."
+                className="w-full rounded-xl border border-border bg-card py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+              />
+            </div>
+
+            {/* Scrollable account list */}
+            <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-2xl bg-card">
+              <div className="flex flex-col divide-y divide-border">
+                {filteredAccounts.map((account) => {
                   const isSelected = selected.has(account.id)
                   return (
                     <button
@@ -128,12 +153,19 @@ export function Onboarding() {
                     </button>
                   )
                 })}
+                {filteredAccounts.length === 0 && (
+                  <p className="px-5 py-8 text-center text-sm text-muted-foreground">
+                    No accounts match &ldquo;{search}&rdquo;
+                  </p>
+                )}
               </div>
             </div>
+
+            {/* Fixed continue button */}
             <button
               onClick={() => setStep(2)}
               disabled={selected.size === 0}
-              className="mt-6 w-full cursor-pointer rounded-2xl bg-foreground py-4 text-base font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-30 active:opacity-70"
+              className="mt-6 w-full shrink-0 cursor-pointer rounded-2xl bg-foreground py-4 text-base font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-30 active:opacity-70"
             >
               Continue
             </button>
