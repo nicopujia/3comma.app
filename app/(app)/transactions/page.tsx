@@ -3,16 +3,6 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Search, X, SlidersHorizontal } from 'lucide-react'
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ReferenceLine,
-} from 'recharts'
 import { useAppStore } from '@/lib/store'
 import { Transaction, toUSD } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
@@ -43,39 +33,9 @@ const TYPE_LABEL: Record<Transaction['type'], string> = {
 const RANGES = ['1W', '1M', '3M', '6M', '1Y', 'ALL'] as const
 type Range = (typeof RANGES)[number]
 
-function formatCompactUSD(value: number): string {
-  const abs = Math.abs(value)
-  if (abs >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
-  if (abs >= 1_000) return `$${(value / 1_000).toFixed(0)}k`
-  return `$${value.toFixed(0)}`
-}
-
-function formatUSD(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
-
 function startOfDay(date: Date): Date {
   const next = new Date(date)
   next.setHours(0, 0, 0, 0)
-  return next
-}
-
-function startOfWeek(date: Date): Date {
-  const next = startOfDay(date)
-  const day = next.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  next.setDate(next.getDate() + diff)
-  return next
-}
-
-function startOfMonth(date: Date): Date {
-  const next = startOfDay(date)
-  next.setDate(1)
   return next
 }
 
@@ -93,62 +53,6 @@ function getRangeStart(range: Range): Date | null {
   const now = startOfDay(new Date())
   now.setDate(now.getDate() - days[range])
   return now
-}
-
-function getBucketStart(date: Date, range: Range): Date {
-  if (range === '1W' || range === '1M') return startOfDay(date)
-  if (range === '3M' || range === '6M') return startOfWeek(date)
-  return startOfMonth(date)
-}
-
-function formatBucketLabel(date: Date, range: Range): string {
-  if (range === '1W') return date.toLocaleDateString('en-US', { weekday: 'short' })
-  if (range === '1M') return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  if (range === '3M' || range === '6M') return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
-}
-
-function formatRangeCaption(range: Range): string {
-  if (range === '1W') return 'last 7 days'
-  if (range === '1M') return 'last 30 days'
-  if (range === '3M') return 'last 3 months'
-  if (range === '6M') return 'last 6 months'
-  if (range === '1Y') return 'last 12 months'
-  return 'all time'
-}
-
-interface CashflowTooltipProps {
-  active?: boolean
-  payload?: Array<{
-    dataKey?: string
-    value?: number
-    color?: string
-    payload?: { label: string }
-  }>
-}
-
-function CashflowTooltip({ active, payload }: CashflowTooltipProps) {
-  if (!active || !payload?.length) return null
-
-  const label = payload[0]?.payload?.label
-  const inflow = payload.find((item) => item.dataKey === 'inflow')?.value ?? 0
-  const outflow = payload.find((item) => item.dataKey === 'outflow')?.value ?? 0
-
-  return (
-    <div className="rounded-xl border border-border bg-background px-3 py-2 shadow-xl">
-      <p className="text-xs font-medium text-foreground">{label}</p>
-      <div className="mt-2 space-y-1 text-xs tabular-nums">
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-muted-foreground">Money in</span>
-          <span className="font-semibold text-positive">{formatUSD(inflow)}</span>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-muted-foreground">Money out</span>
-          <span className="font-semibold text-negative">-{formatUSD(outflow)}</span>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 function formatAmount(amount: number, currency: string): string {
@@ -243,54 +147,6 @@ export default function TransactionsPage() {
       return true
     })
   }, [transactions, activeAccountIds, rangeStart, search, selectedTypes, selectedAccountIds, minAmount, maxAmount])
-
-  const cashflowData = useMemo(() => {
-    const buckets = new Map<string, { date: Date; label: string; inflow: number; outflow: number }>()
-
-    for (const tx of filteredTxs) {
-      const txDate = tx.timestamp instanceof Date ? tx.timestamp : new Date(tx.timestamp)
-      const bucketDate = getBucketStart(txDate, range)
-      const key = bucketDate.toISOString()
-      const usdAmount = Math.abs(toUSD(tx.amount, tx.currency))
-      const existing = buckets.get(key) ?? {
-        date: bucketDate,
-        label: formatBucketLabel(bucketDate, range),
-        inflow: 0,
-        outflow: 0,
-      }
-
-      if (tx.type === 'inflow') {
-        existing.inflow += usdAmount
-      } else {
-        existing.outflow += usdAmount
-      }
-
-      buckets.set(key, existing)
-    }
-
-    return [...buckets.values()]
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
-      .map((bucket) => ({
-        ...bucket,
-        net: bucket.inflow - bucket.outflow,
-      }))
-  }, [filteredTxs, range])
-
-  const moneyIn = useMemo(
-    () => filteredTxs.reduce((sum, tx) => sum + (tx.type === 'inflow' ? Math.abs(toUSD(tx.amount, tx.currency)) : 0), 0),
-    [filteredTxs]
-  )
-
-  const moneyOut = useMemo(
-    () => filteredTxs.reduce((sum, tx) => sum + (tx.type === 'outflow' ? Math.abs(toUSD(tx.amount, tx.currency)) : 0), 0),
-    [filteredTxs]
-  )
-
-  const chartTicks = useMemo(() => {
-    const tickCount = range === '1W' ? 7 : range === '1M' ? 5 : 4
-    const step = Math.max(1, Math.floor(cashflowData.length / tickCount))
-    return cashflowData.filter((_, index) => index % step === 0).map((item) => item.label)
-  }, [cashflowData, range])
 
   const handleTxTap = (tx: Transaction) => {
     if (tx.accountId === 'manual-cash') { setEditingTx(tx); return }
@@ -395,59 +251,6 @@ export default function TransactionsPage() {
               {r}
             </button>
           ))}
-        </div>
-
-        <div className="mt-4 overflow-hidden rounded-3xl border border-border bg-card">
-          <div className="border-b border-border px-4 py-3">
-            <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Cash flow</div>
-            <div className="mt-1 text-sm text-muted-foreground">Money in vs money out for the {formatRangeCaption(range)}</div>
-          </div>
-
-          {cashflowData.length === 0 ? (
-            <div className="flex h-[220px] items-center justify-center px-6 text-center text-sm text-muted-foreground">
-              No transactions in this period.
-            </div>
-          ) : (
-            <>
-              <div className="px-2 pt-3">
-                <ResponsiveContainer width="100%" height={180}>
-                  <BarChart data={cashflowData} margin={{ top: 8, right: 6, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="0" stroke="var(--border)" strokeOpacity={0.45} vertical={false} />
-                    <XAxis
-                      dataKey="label"
-                      ticks={chartTicks}
-                      tick={{ fontSize: 10, fill: 'var(--muted-foreground)', dy: 6 }}
-                      axisLine={false}
-                      tickLine={false}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis
-                      tickFormatter={formatCompactUSD}
-                      tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
-                      axisLine={false}
-                      tickLine={false}
-                      width={46}
-                    />
-                    <ReferenceLine y={0} stroke="var(--border)" strokeOpacity={0.75} />
-                    <Tooltip content={<CashflowTooltip />} cursor={{ fill: 'var(--muted)', fillOpacity: 0.2 }} />
-                    <Bar dataKey="inflow" fill="var(--color-positive)" radius={[6, 6, 0, 0]} maxBarSize={24} />
-                    <Bar dataKey="outflow" fill="var(--color-negative)" radius={[6, 6, 0, 0]} maxBarSize={24} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 border-t border-border px-4 py-4">
-                <div className="rounded-2xl bg-positive/8 px-4 py-3">
-                  <div className="text-[11px] font-medium uppercase tracking-widest text-positive/80">Money in</div>
-                  <div className="mt-1 text-lg font-semibold tabular-nums text-positive">{formatUSD(moneyIn)}</div>
-                </div>
-                <div className="rounded-2xl bg-negative/8 px-4 py-3">
-                  <div className="text-[11px] font-medium uppercase tracking-widest text-negative/80">Money out</div>
-                  <div className="mt-1 text-lg font-semibold tabular-nums text-negative">-{formatUSD(moneyOut)}</div>
-                </div>
-              </div>
-            </>
-          )}
         </div>
       </div>
 

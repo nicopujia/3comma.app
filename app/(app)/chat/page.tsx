@@ -331,9 +331,9 @@ ${recentTxs}`
 }
 
 const SUGGESTED = [
-  'What was my biggest purchase in the last month?',
-  'Where is most of my money sitting right now?',
+  'How is my capital distributed?',
   'How has my savings rate evolved over the past year?',
+  'Which month did I spend the most?',
 ]
 
 const CHAT_STORAGE_KEY = '3comma-chat'
