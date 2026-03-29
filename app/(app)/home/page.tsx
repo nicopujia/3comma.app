@@ -260,7 +260,8 @@ export default function HomePage() {
                           account.included ? 'text-muted-foreground' : 'text-muted-foreground/50'
                         )}
                       >
-                        {formatBalance(account.balance, account.currency)}
+                        {new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(account.balance)}
+                        <span className="ml-0.5 text-[10px] uppercase">{account.currency.toLowerCase()}</span>
                       </span>
                       {account.included && percent > 0 && (
                         <>

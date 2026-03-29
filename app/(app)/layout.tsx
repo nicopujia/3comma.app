@@ -59,7 +59,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 aria-label={label}
                 className={cn(
                   'flex flex-1 cursor-pointer flex-col items-center gap-1 py-3 transition-colors hover:text-foreground',
-                  isActive ? 'text-foreground' : 'text-muted-foreground/50'
+                  isActive ? 'text-foreground' : 'text-muted-foreground'
                 )}
               >
                 <Icon
@@ -68,7 +68,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     isActive ? 'stroke-[2]' : 'stroke-[1.5]'
                   )}
                 />
-                <span className={cn('text-[10px] font-medium', isActive ? 'opacity-100' : 'opacity-60')}>
+                <span className={cn('text-[10px] font-medium', isActive ? 'opacity-100' : 'opacity-80')}>
                   {label}
                 </span>
               </Link>

@@ -7,7 +7,7 @@ import { groq } from '@ai-sdk/groq'
 import { openai } from '@ai-sdk/openai'
 
 const model = process.env.NODE_ENV === 'production'
-  ? openai('gpt-4o-mini')
+  ? openai('gpt-4.1-mini')
   : groq('llama-3.3-70b-versatile')
 
 export const maxDuration = 30
