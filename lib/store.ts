@@ -37,6 +37,9 @@ interface PersistedState {
 interface AppStore extends PersistedState {
   completeOnboarding: (selectedIds: string[]) => void
   resetOnboarding: () => void
+  logout: () => void
+  addAccount: (id: string) => void
+  removeAccount: (id: string) => void
   toggleIncluded: (id: string) => void
   updateBalance: (id: string, delta: number) => void
   setCashBalance: (amount: number) => void
@@ -75,6 +78,43 @@ export const useAppStore = create<AppStore>()(
           accounts: [],
           transactions: [],
         }),
+
+      logout: () => {
+        localStorage.removeItem('3comma-store')
+        set({
+          onboardingComplete: false,
+          selectedAccountIds: DEFAULT_ACCOUNT_IDS,
+          accounts: [],
+          transactions: [],
+          savedCharts: [],
+        })
+      },
+
+      addAccount: (id: string) => {
+        const existing = get().accounts.find((a) => a.id === id)
+        if (existing) return
+        const account = ALL_ACCOUNTS.find((a) => a.id === id)
+        if (!account) return
+        const newAccounts = [...get().accounts, account]
+        set({
+          selectedAccountIds: [...get().selectedAccountIds, id],
+          accounts: newAccounts,
+          transactions: generateTransactions(newAccounts),
+          txDataVersion: TX_DATA_VERSION,
+        })
+      },
+
+      removeAccount: (id: string) => {
+        if (id === CASH_ACCOUNT_ID) return
+        const newAccounts = get().accounts.filter((a) => a.id !== id)
+        if (newAccounts.length === 0) return
+        set({
+          selectedAccountIds: get().selectedAccountIds.filter((i) => i !== id),
+          accounts: newAccounts,
+          transactions: generateTransactions(newAccounts),
+          txDataVersion: TX_DATA_VERSION,
+        })
+      },
 
       toggleIncluded: (id: string) =>
         set((state) => ({
