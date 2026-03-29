@@ -30,9 +30,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 px-6 pt-6 pb-8">
+    <div className="flex flex-col gap-6 px-6 pt-6 pb-8 animate-in slide-in-from-right-4 duration-200">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 animate-in fade-in-0 slide-in-from-left-2 duration-300">
         <Link
           href="/home"
           className="-ml-2 flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
@@ -43,17 +43,18 @@ export default function SettingsPage() {
       </div>
 
       {/* Your accounts */}
-      <section className="flex flex-col gap-3">
+      <section className="flex flex-col gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300 delay-75">
         <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
           Your accounts
         </span>
         <div className="flex flex-col divide-y divide-border">
           {accounts
             .filter((a) => a.id !== 'manual-cash')
-            .map((account) => (
+            .map((account, i) => (
               <div
                 key={account.id}
-                className="flex items-center justify-between py-3.5"
+                className="flex items-center justify-between py-3.5 animate-in fade-in-0 slide-in-from-bottom-1 duration-300"
+                style={{ animationDelay: `${100 + i * 40}ms`, animationFillMode: 'both' }}
               >
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-medium text-foreground">
@@ -75,7 +76,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Add accounts */}
-      <section className="flex flex-col gap-3">
+      <section className="flex flex-col gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300 delay-150">
         <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
           Add accounts
         </span>
@@ -90,10 +91,11 @@ export default function SettingsPage() {
           />
         </div>
         <div className="flex flex-col divide-y divide-border">
-          {availableToAdd.map((account) => (
+          {availableToAdd.map((account, i) => (
             <div
               key={account.id}
-              className="flex items-center justify-between py-3.5"
+              className="flex items-center justify-between py-3.5 animate-in fade-in-0 slide-in-from-bottom-1 duration-300"
+              style={{ animationDelay: `${200 + i * 40}ms`, animationFillMode: 'both' }}
             >
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium text-foreground">
@@ -127,7 +129,7 @@ export default function SettingsPage() {
       {/* Logout */}
       <button
         onClick={handleLogout}
-        className="-mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-negative/20 py-3.5 text-sm font-semibold text-negative transition-colors hover:bg-negative/5"
+        className="-mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-negative/20 py-3.5 text-sm font-semibold text-negative transition-colors hover:bg-negative/5 animate-in fade-in-0 slide-in-from-bottom-2 duration-300 delay-200"
       >
         <LogOut className="h-4 w-4" />
         Log out
